@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Factory Production Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      font-size: 3rem;
+      color: #00ffff;
+      margin-bottom: 30px;
+    }
+    .section-label {
+      font-size: 2rem;
+      color: #ccc;
+      text-align: center;
+      margin: 40px 0 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .separator {
+      height: 3px;
+      background: #555;
+      margin: 40px auto;
+      max-width: 90%;
+    }
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+    }
+    .machine-card {
+      background-color: #111;
+      border: 2px solid #444;
+      border-radius: 20px;
+      width: 280px;
+      height: 280px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 0 15px rgba(0,255,255,0.2);
+      transition: transform 0.2s ease;
+    }
+    .machine-card:hover {
+      transform: scale(1.03);
+    }
+    .machine-name {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .top-half {
+      background-color: #004d00;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #00ff00;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .bottom-half {
+      display: flex;
+      height: 35%;
+      gap: 10px;
+    }
+    .bottom-half div {
+      flex: 1;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .left {
+      background-color: #ffcc00;
+      color: #000;
+    }
+    .right {
+      background-color: #cc0000;
+      color: #fff;
+    }
+    .btn-custom {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      padding: 8px 20px;
+      border-radius: 10px;
+      background: #007bff;
+      color: #fff;
+      width: 100%;
+    }
+    @media (max-width: 768px) {
+      .machine-card {
+        width: 90%;
+        height: auto;
+        padding: 15px;
+      }
+      .machine-name {
+        font-size: 1.6rem;
+      }
+      .top-half,
+      .bottom-half div {
+        font-size: 1.2rem;
+      }
+      .btn-custom {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>
+    <img src="/static/logo1.jpg" alt="Logo" style="height: 1.5em; vertical-align: middle; margin-right: 12px;">
+    Shop Floor Production Andon Board
+  </h2>
+
+  <!-- Vacuum Forming Machines -->
+  <div class="section-label">Vacuum Forming</div>
+  <div class="dashboard">
+    {% for machine in machines if machine.category == "Vacuum Forming" %}
+      <div class="machine-card">
+        <div class="machine-name">{{ machine.name }}</div>
+        <div class="top-half">
+          🎯 Target: {{ machine.target }}
+        </div>
+        <div class="bottom-half">
+          <div class="left">To Do: {{ machine.todo }}</div>
+          <div class="right">Done: {{ machine.done }}</div>
+        </div>
+        <a href="{{ machine.url }}" class="btn btn-custom">Details</a>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="separator"></div>
+
+  <!-- Trimming Machines -->
+  <div class="section-label">Trimming</div>
+  <div class="dashboard">
+    {% for machine in machines if machine.category == "Trimming" %}
+      <div class="machine-card">
+        <div class="machine-name">{{ machine.name }}</div>
+        <div class="top-half">
+          🎯 Target: {{ machine.target }}
+        </div>
+        <div class="bottom-half">
+          <div class="left">To Do: {{ machine.todo }}</div>
+          <div class="right">Done: {{ machine.done }}</div>
+        </div>
+        <a href="{{ machine.url }}" class="btn btn-custom">Details</a>
+      </div>
+    {% endfor %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+import pandas as pd
+from flask import Flask, render_template, jsonify
+from datetime import datetime
+from io import BytesIO
+from office365.runtime.auth.user_credential import UserCredential
+from office365.sharepoint.client_context import ClientContext
+import sqlite3
+
+
+app = Flask(__name__)
+
+# SharePoint authentication details
+site_url = "https://donite1.sharepoint.com/sites/Donite"
+username = "daniel@donite.com"
+password = "And096521"
+
+# SharePoint file details
+file_url_pvt = (
+    "/sites/Donite/Shared Documents/Quality/01-QMS/Records/"
+    "DONITE Production Approvals/PPAR/Plan vs Actual - Daniel - Copy.xlsm"
+)
+
+# Excel read parameters
+sheet_name_pvt = "PVT - Planned Start Date"
+header_row = 11  # Excel row 12 (0-indexed 11)
+
+# For vacuum machines (primary table)
+usecols_vacuum = "M:S"  # as before
+column_rename_map_vacuum = {
+    "Production Resources.ResourceDescription": "ResourceDescription",
+    "FinishDate": "FinishDate",
+    "WorksOrderNumber": "WorksOrderNumber",
+    "Sum of TotalHours": "TotalHours",
+    "Part Number": "PartNumber",
+    "Parts Qty": "PartsQty",
+    "WO Status": "WO Status",
+}
+
+# For trimming machines (secondary table)
+usecols_trimming = "X:AD"  # columns X12 to AD12 as per your description
+column_rename_map_trimming = {
+    "Production Resources.ResourceDescription": "ResourceDescription",  # or exact name in that table
+    "FinishDate": "FinishDate",
+    "WorksOrderNumber": "WorksOrderNumber",
+    "Sum of TotalHours": "TotalHours",
+    "Part Number": "PartNumber",
+    "Parts Qty": "PartsQty",
+    "WO Status": "WO Status",
+}
+
+
+
+def create_db_and_load_excel():
+    file_stream = get_sharepoint_file(file_url_pvt)
+    df_vacuum = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row, usecols=usecols_vacuum, engine="openpyxl")
+    df_trimming = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row, usecols=usecols_trimming, engine="openpyxl")
+
+
+    conn = sqlite3.connect("production_data.db")
+
+    # For example, save vacuum data:
+    df_vacuum.to_sql("vacuum_data", conn, if_exists="replace", index=False)
+
+    # Save trimming data:
+    df_trimming.to_sql("trimming_data", conn, if_exists="replace", index=False)
+
+    conn.close()
+    
+def get_data_from_db(machine_name, machine_type="vacuum"):
+    conn = sqlite3.connect("production_data.db")
+    table = "vacuum_data" if machine_type == "vacuum" else "trimming_data"
+    query = f"""
+        SELECT * FROM {table}
+        WHERE ResourceDescription = ?
+    """
+    df = pd.read_sql_query(query, conn, params=(machine_name,))
+    conn.close()
+    return df
+
+def get_sharepoint_file(file_url):
+    """Connect to SharePoint and download the specified file."""
+    ctx = ClientContext(site_url).with_credentials(UserCredential(username, password))
+    file_stream = BytesIO()
+    ctx.web.get_file_by_server_relative_url(file_url).download(file_stream).execute_query()
+    file_stream.seek(0)
+    return file_stream
+
+def get_dashboard_data(resource_name, usecols, rename_map):
+    try:
+        file_stream = get_sharepoint_file(file_url_pvt)
+
+        df = pd.read_excel(
+            file_stream,
+            sheet_name=sheet_name_pvt,
+            header=header_row,
+            usecols=usecols,
+            engine="openpyxl"
+        )
+        print("DEBUG: Columns loaded:", df.columns.tolist())  # << add this line
+
+        df.columns = df.columns.str.strip()
+        df.columns = df.columns.str.replace(r'\.\d+$', '', regex=True)
+        df.rename(columns=rename_map, inplace=True)
+
+        if "ResourceDescription" not in df.columns:
+            raise KeyError("ResourceDescription column missing after rename")
+
+        df = df[df["ResourceDescription"] == resource_name].copy()
+
+        df["FinishDate"] = pd.to_datetime(df["FinishDate"], errors="coerce")
+        df["TotalHours"] = pd.to_numeric(df["TotalHours"], errors="coerce").fillna(0)
+        df["PartsQty"] = pd.to_numeric(df["PartsQty"], errors="coerce").fillna(0)
+
+        today = datetime.today().date()
+        total_work_orders = df.shape[0]
+        total_today = df[df["FinishDate"].dt.date == today].shape[0]
+        total_backlog = total_work_orders - total_today
+
+        work_orders = [
+            {
+                "finish_date": row["FinishDate"].strftime("%d-%m-%y") if pd.notnull(row["FinishDate"]) else "",
+                "work_order_number": row["WorksOrderNumber"],
+                "part_number": row["PartNumber"],
+                "total_hours_required": row["TotalHours"],
+                "parts_qty": row["PartsQty"],
+                "wo_status": row["WO Status"],
+                "printing_status": row.get("Printing Status", "Not Printed"),
+            }
+            for _, row in df.iterrows()
+        ]
+
+        return {
+            "total_work_orders": total_work_orders,
+            "total_today": total_today,
+            "total_backlog": total_backlog,
+            "work_orders": work_orders
+        }
+
+    except Exception as e:
+        app.logger.error(f"Error processing data for {resource_name}: {e}")
+        return None
+
+
+@app.route("/")
+def dashboard():
+    vacuum_machines = ["Yellow Cannon", "Eidos", "Blue Cannon", "Red Cannon", "UNO"]
+    trimming_machines = ["Ares 1", "Ares 2", "Ares 3", "Grimme 1", "Grimme 2"]
+    return render_template(
+        "index1.html",
+        vacuum_machines=vacuum_machines,
+        trimming_machines=trimming_machines
+    )
+
+vacuum_machines = ["Yellow Cannon", "Eidos", "Blue Cannon Shelley-Max 1450x915", "UNO 810x610", "Red Cannon"]
+trimming_machines = ['CMS Ares "New" Prime', "CMS Ares 4618 Prime", "CMS Ares 3618 Prime", "Grimme 1", "Grimme 2"]
+
+slug_to_excel_name = {
+    "yellow-cannon": "Yellow Cannon",
+    "uno": "UNO 810x610",
+    "red-cannon": "Red Cannon",
+    "grimme-2": "Grimme 2",
+    "grimme-1": "Grimme 1",
+    "eidos": "CMS EIDOS",
+    "blue-cannon": "Blue Cannon Shelley-Max 1450x915",
+    "ares-1": 'CMS Ares "New" Prime',
+    "ares-2": "CMS Ares 4618 Prime",
+    "ares-3": "CMS Ares 3618 Prime"
+}
+
+
+# Map Excel resource names to HTML templates
+excel_to_html = {
+    "Yellow Cannon": "Yellow Cannon.html",
+    "UNO 810x610": "UNO.html",
+    "Red Cannon": "Red Cannon.html",
+    "Grimme 2": "Grimme 2.html",
+    "Grimme 1": "Grimme 1.html",
+    "CMS EIDOS": "Eidos.html",
+    "Blue Cannon Shelley-Max 1450x915": "Blue Cannon.html",
+    'CMS Ares "New" Prime': "Ares 1.html",
+    "CMS Ares 4618 Prime": "Ares 2.html",
+    "CMS Ares 3618 Prime": "Ares 3.html",
+}
+
+@app.route("/<machine_slug>")
+def machine_dashboard(machine_slug):
+    machine_slug = machine_slug.lower()
+    excel_name = slug_to_excel_name.get(machine_slug)
+    if not excel_name:
+        return "Machine not found", 404
+
+    if excel_name in trimming_machines:
+        usecols = usecols_trimming
+        rename_map = column_rename_map_trimming
+    else:
+        usecols = usecols_vacuum
+        rename_map = column_rename_map_vacuum
+
+    data = get_dashboard_data(excel_name, usecols, rename_map)
+    if data is None:
+        return jsonify({"error": f"Could not load data for {excel_name}"}), 500
+
+    template_name = excel_to_html.get(excel_name, "default.html")
+
+    return render_template(
+        template_name,
+        total_work_orders=data["total_work_orders"],
+        total_today=data["total_today"],
+        total_backlog=data["total_backlog"],
+        work_orders=data["work_orders"]
+    )
+
+if __name__ == "__main__":
+    app.run(debug=True)

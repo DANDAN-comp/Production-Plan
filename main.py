@@ -6,6 +6,15 @@ from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.client_context import ClientContext
 import sqlite3
 import threading
+import os
+import psycopg2
+from sqlalchemy import create_engine
+
+
+
+
+
+
 
 app = Flask(__name__)
 
@@ -48,6 +57,12 @@ column_rename_map_trimming = {
     "WO Status": "WO Status",
 }
 
+DATABASE_URLL = os.getenv("DATABASE_URLL")  # Set this in Render as an environment variable  # same var
+engine = create_engine(DATABASE_URLL)
+
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URLL, sslmode="require")
+
 def get_sharepoint_file(file_url):
     ctx = ClientContext(site_url).with_credentials(UserCredential(username, password))
     file_stream = BytesIO()
@@ -77,9 +92,9 @@ def create_db_and_load_excel():
                                     usecols=usecols_trimming, engine="openpyxl")
         df_trimming = clean_and_prepare_df(df_trimming, column_rename_map_trimming)
 
-        conn = sqlite3.connect("production_data.db")
-        df_vacuum.to_sql("vacuum_data", conn, if_exists="replace", index=False)
-        df_trimming.to_sql("trimming_data", conn, if_exists="replace", index=False)
+        conn = get_db_connection()
+        df_vacuum.to_sql("vacuum_data", engine, if_exists="replace", index=False)
+        df_trimming.to_sql("trimming_data", engine, if_exists="replace", index=False)
         conn.close()
         print(f"[{datetime.now()}] Database updated with latest Excel data.")
     except Exception as e:
@@ -90,9 +105,14 @@ def scheduled_refresh(interval_seconds=600):
     threading.Timer(interval_seconds, scheduled_refresh, [interval_seconds]).start()
 
 def get_dashboard_data(resource_name, machine_type):
-    conn = sqlite3.connect("production_data.db")
+    conn = get_db_connection()
     table = "vacuum_data" if machine_type == "vacuum" else "trimming_data"
-    df = pd.read_sql_query(f"SELECT * FROM {table} WHERE ResourceDescription = ?", conn, params=(resource_name,))
+    df = pd.read_sql_query(
+        "SELECT * FROM vacuum_data WHERE \"ResourceDescription\" = %s",
+        engine,
+        params=(resource_name,)
+    )
+
     conn.close()
 
     if df.empty:
@@ -185,7 +205,7 @@ def index():
         "CMS Ares 3618 Prime": "Ares 1"
     }
 
-    conn = sqlite3.connect("production_data.db")
+    conn = get_db_connection()
     machine_data = []
     for machine_name in vacuum_machines + trimming_machines:
         table = "vacuum_data" if machine_name in vacuum_machines else "trimming_data"

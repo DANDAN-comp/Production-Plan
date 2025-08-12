@@ -212,6 +212,4 @@ def index():
 if __name__ == "__main__":
     print("Loading Excel data from SharePoint into local DB initially...")
     create_db_and_load_excel()
-    print("Starting scheduled refresh every 10 minutes...")
-    scheduled_refresh(600)
     app.run(debug=True)

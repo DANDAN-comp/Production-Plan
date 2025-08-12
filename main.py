@@ -209,10 +209,14 @@ def index():
     machine_data = []
     for machine_name in vacuum_machines + trimming_machines:
         table = "vacuum_data" if machine_name in vacuum_machines else "trimming_data"
-        result = conn.execute(f"""
-            SELECT COUNT(DISTINCT WorksOrderNumber) as total_wos
-            FROM {table} WHERE ResourceDescription = ?
-        """, (machine_name,)).fetchone()
+        cur = conn.cursor()
+        cur.execute(f"""
+            SELECT COUNT(DISTINCT "WorksOrderNumber") as total_wos
+            FROM {table} WHERE "ResourceDescription" = %s
+        """, (machine_name,))
+        result = cur.fetchone()
+        cur.close()
+
         total_wos = result[0] if result else 0
 
         display_name = display_name_map.get(machine_name, machine_name)

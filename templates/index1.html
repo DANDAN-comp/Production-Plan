@@ -124,19 +124,61 @@
       }
     }
   </style>
+  <style>
+  .header-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 10px;
+  }
+
+  .header-title {
+    text-align: center;
+    margin: 0;
+    font-size: 3rem;
+    color: #00ffff;
+  }
+
+  .header-logo {
+    height: 1.5em;
+    vertical-align: middle;
+    margin-right: 12px;
+  }
+
+  .header-qr {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 180px;
+    border: 2px solid #fff;
+    border-radius: 8px;
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 768px) {
+    .header-container {
+      flex-direction: column;
+      gap: 10px;
+    }
+    .header-qr {
+      position: static;
+      height: 140px;
+    }
+    .header-title {
+      font-size: 2rem;
+    }
+  }
+</style>
 </head>
 <body>
 
-  <div style="position: relative;">
-  <!-- Centered heading with logo -->
-  <h2 style="text-align: center; margin: 0; padding-top: 10px;">
-    <img src="/static/logo1.jpg" alt="Logo" style="height: 1.5em; vertical-align: middle; margin-right: 12px;">
+  <div class="header-container">
+  <h2 class="header-title">
+    <img src="/static/logo1.jpg" alt="Logo" class="header-logo">
     Shop Floor Production Andon Board
   </h2>
-
-  <!-- QR code top-right -->
-  <img src="/static/Production Plan.jpg" alt="Production Plan"
-       style="position: absolute; top: 0; right: 0; height: 180px; border: 2px solid #fff; border-radius: 8px;">
+  <img src="/static/Production Plan.jpg" alt="Production Plan" class="header-qr">
 </div>
 
 

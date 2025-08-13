@@ -57,11 +57,23 @@ column_rename_map_trimming = {
     "WO Status": "WO Status",
 }
 
+# --- Local Testing (SQLite) ---
+# Uncomment for local testing:
+#DATABASE_URLL = "sqlite:///local.db"
+#engine = create_engine(DATABASE_URLL)
+
+#def get_db_connection():
+    #if DATABASE_URLL.startswith("sqlite"):
+        #return sqlite3.connect("local.db")
+#else:
+        #return psycopg2.connect(DATABASE_URLL, sslmode="require")
+
 DATABASE_URLL = os.getenv("DATABASE_URLL")  # Set this in Render as an environment variable  # same var
 engine = create_engine(DATABASE_URLL)
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URLL, sslmode="require")
+
 
 def get_sharepoint_file(file_url):
     ctx = ClientContext(site_url).with_credentials(UserCredential(username, password))
@@ -107,10 +119,18 @@ def scheduled_refresh(interval_seconds=600):
 def get_dashboard_data(resource_name, machine_type):
     conn = get_db_connection()
     table = "vacuum_data" if machine_type == "vacuum" else "trimming_data"
+    placeholder = "?" if DATABASE_URLL.startswith("sqlite") else "%s"
+
+    # TRIM + ILIKE for Postgres, just = for SQLite
+    if DATABASE_URLL.startswith("sqlite"):
+        query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") = {placeholder}'
+    else:
+        query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") ILIKE {placeholder}'
+
     df = pd.read_sql_query(
-        "SELECT * FROM vacuum_data WHERE \"ResourceDescription\" = %s",
+        query,
         engine,
-        params=(resource_name,)
+        params=(resource_name.strip(),)
     )
 
     conn.close()
@@ -130,10 +150,9 @@ def get_dashboard_data(resource_name, machine_type):
     work_orders = []
     for _, row in df.iterrows():
         printing_status = "Not Printed"
-        if "Printing Status" in df.columns:
-            val = row["Printing Status"]
-            if pd.notnull(val):
-                printing_status = val
+        if "Printing Status" in df.columns and pd.notnull(row.get("Printing Status")):
+            printing_status = row["Printing Status"]
+
         work_orders.append({
             "finish_date": row["FinishDate"].strftime("%d-%m-%y") if pd.notnull(row["FinishDate"]) else "",
             "work_order_number": row["WorksOrderNumber"],
@@ -209,16 +228,19 @@ def index():
     machine_data = []
     for machine_name in vacuum_machines + trimming_machines:
         table = "vacuum_data" if machine_name in vacuum_machines else "trimming_data"
+        placeholder = "?" if DATABASE_URLL.startswith("sqlite") else "%s"
+
+        if DATABASE_URLL.startswith("sqlite"):
+            query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") = {placeholder}'
+        else:
+            query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") ILIKE {placeholder}'
+
         cur = conn.cursor()
-        cur.execute(f"""
-            SELECT COUNT(DISTINCT "WorksOrderNumber") as total_wos
-            FROM {table} WHERE "ResourceDescription" = %s
-        """, (machine_name,))
+        cur.execute(query, (machine_name.strip(),))
         result = cur.fetchone()
         cur.close()
 
         total_wos = result[0] if result else 0
-
         display_name = display_name_map.get(machine_name, machine_name)
 
         machine_data.append({

@@ -153,6 +153,9 @@ def get_dashboard_data(resource_name, machine_type):
         if "Printing Status" in df.columns and pd.notnull(row.get("Printing Status")):
             printing_status = row["Printing Status"]
 
+        start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
+        is_backlog = start_date != today
+
         work_orders.append({
             "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
             "work_order_number": row["WorksOrderNumber"],
@@ -160,8 +163,12 @@ def get_dashboard_data(resource_name, machine_type):
             "total_hours_required": row["TotalHours"],
             "parts_qty": row["PartsQty"],
             "wo_status": row["WO Status"],
-            "printing_status": printing_status
+            "printing_status": printing_status,
+            "is_backlog": is_backlog
         })
+
+    # ✅ Sort so today's orders come first, then backlog
+    work_orders.sort(key=lambda x: (x["is_backlog"], x["start_date"]), reverse=False)
 
     return {
         "total_work_orders": total_work_orders,

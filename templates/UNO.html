@@ -86,6 +86,11 @@
       font-size: 1rem;
       border-radius: 0.5rem;
     }
+    tr.table-danger {
+  background-color: #8b0000 !important;
+  color: #fff;
+}
+
 
     /* Mobile spacing for stacked cards */
     @media (max-width: 767.98px) {
@@ -133,7 +138,7 @@
         </thead>
         <tbody>
           {% for order in work_orders %}
-          <tr>
+            <tr class="{% if order.is_backlog %}table-danger{% endif %}">
             <td>{{ order.start_date }}</td>
             <td>{{ order.work_order_number }}</td>
             <td>{{ order.part_number }}</td>

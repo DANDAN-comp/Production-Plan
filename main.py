@@ -37,7 +37,7 @@ header_row = 11  # Excel row 12 (0-indexed 11)
 usecols_vacuum = "M:S"
 column_rename_map_vacuum = {
     "Production Resources.ResourceDescription": "ResourceDescription",
-    "FinishDate": "FinishDate",
+    "StartDate": "StartDate",
     "WorksOrderNumber": "WorksOrderNumber",
     "Sum of TotalHours": "TotalHours",
     "Part Number": "PartNumber",
@@ -49,7 +49,7 @@ column_rename_map_vacuum = {
 usecols_trimming = "X:AD"
 column_rename_map_trimming = {
     "Production Resources.ResourceDescription": "ResourceDescription",
-    "FinishDate": "FinishDate",
+    "StartDate": "StartDate",
     "WorksOrderNumber": "WorksOrderNumber",
     "Sum of TotalHours": "TotalHours",
     "Part Number": "PartNumber",
@@ -138,13 +138,13 @@ def get_dashboard_data(resource_name, machine_type):
     if df.empty:
         return None
 
-    df["FinishDate"] = pd.to_datetime(df["FinishDate"], errors="coerce")
+    df["StartDate"] = pd.to_datetime(df["StartDate"], errors="coerce")
     df["TotalHours"] = pd.to_numeric(df["TotalHours"], errors="coerce").fillna(0)
     df["PartsQty"] = pd.to_numeric(df["PartsQty"], errors="coerce").fillna(0)
 
     today = datetime.today().date()
     total_work_orders = df.shape[0]
-    total_today = df[df["FinishDate"].dt.date == today].shape[0]
+    total_today = df[df["StartDate"].dt.date == today].shape[0]
     total_backlog = total_work_orders - total_today
 
     work_orders = []
@@ -154,7 +154,7 @@ def get_dashboard_data(resource_name, machine_type):
             printing_status = row["Printing Status"]
 
         work_orders.append({
-            "finish_date": row["FinishDate"].strftime("%d-%m-%y") if pd.notnull(row["FinishDate"]) else "",
+            "start_date": row["FinishDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
             "work_order_number": row["WorksOrderNumber"],
             "part_number": row["PartNumber"],
             "total_hours_required": row["TotalHours"],

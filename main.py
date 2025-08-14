@@ -154,7 +154,7 @@ def get_dashboard_data(resource_name, machine_type):
             printing_status = row["Printing Status"]
 
         work_orders.append({
-            "start_date": row["FinishDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
+            "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
             "work_order_number": row["WorksOrderNumber"],
             "part_number": row["PartNumber"],
             "total_hours_required": row["TotalHours"],

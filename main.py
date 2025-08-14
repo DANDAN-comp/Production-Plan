@@ -138,27 +138,22 @@ def create_db_and_load_excel():
 # === Data providers ===
 def get_stores_data():
     conn = get_db_connection()
-    # Use normalized column names
     df = pd.read_sql_query("SELECT * FROM stores_data ORDER BY start_date DESC", engine)
     conn.close()
 
-    # make sure dtype is datetime
-    if "start_date" in df.columns:
-        df["start_date"] = pd.to_datetime(df["start_date"], errors="coerce")
-
     today = datetime.today().date()
-
     work_orders = []
     for _, row in df.iterrows():
-        sd = row["start_date"].date() if pd.notnull(row.get("start_date")) else None
-        is_backlog = (sd != today) if sd else True
+        start_date = row["startdate"].date() if pd.notnull(row["startdate"]) else None
+        is_backlog = start_date != today
         work_orders.append({
-            "start_date": row["start_date"].strftime("%d-%m-%y") if pd.notnull(row.get("start_date")) else "",
-            "work_order_number": row.get("works_order_number"),
-            "part_number": row.get("part_number"),
-            "total_hours_required": row.get("total_hours"),
-            "parts_qty": row.get("parts_qty"),
-            "wo_status": row.get("wo_status"),
+            "start_date": row["startdate"].strftime("%d-%m-%y") if pd.notnull(row["startdate"]) else "",
+            "work_order_number": row["works_order_number"],
+"part_number": row["part_number"],
+"total_hours_required": row["total_hours"],
+
+            "parts_qty": row["parts_qty"],
+            "wo_status": row["wo_status"],
             "printing_status": "Not Printed",
             "is_backlog": is_backlog
         })
@@ -172,6 +167,7 @@ def get_stores_data():
         "total_backlog": total_backlog,
         "work_orders": work_orders
     }
+
 
 def get_dashboard_data(resource_name, machine_type):
     conn = get_db_connection()
@@ -189,6 +185,10 @@ def get_dashboard_data(resource_name, machine_type):
 
     if df.empty:
         return None
+
+    df["startdate"] = pd.to_datetime(df["startdate"], errors="coerce")
+    df["totalhours"] = pd.to_numeric(df["totalhours"], errors="coerce").fillna(0)
+    df["parts_qty"] = pd.to_numeric(df["parts_qty"], errors="coerce").fillna(0)
 
     # Ensure dtypes
     if "start_date" in df.columns:
@@ -211,8 +211,8 @@ def get_dashboard_data(resource_name, machine_type):
         if "printing_status" in df.columns and pd.notnull(row.get("printing_status")):
             printing_status = row["printing_status"]
 
-        sd = row["start_date"].date() if pd.notnull(row.get("start_date")) else None
-        is_backlog = (sd != today) if sd else True
+        start_date = row["startdate"].date() if pd.notnull(row["startdate"]) else None
+        is_backlog = start_date != today
 
         work_orders.append({
             "start_date": row["start_date"].strftime("%d-%m-%y") if pd.notnull(row.get("start_date")) else "",

@@ -258,6 +258,15 @@ def index():
             "done": "NA",
             "url": "/" + [slug for slug, name in slug_to_excel_name.items() if name == machine_name][0]
         })
+
+        machine_data.append({
+            "name": "Stores",
+            "category": "Stores",
+            "target": 0,
+            "todo": "NA",
+            "done": "NA",
+            "url": "/stores.html"  # Explicitly set URL
+        })
     conn.close()
     return render_template("index1.html", machines=machine_data)
 

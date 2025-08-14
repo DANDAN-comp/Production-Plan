@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stores Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 2.5rem;
+      color: #00ffff;
+      margin-bottom: 30px;
+    }
+
+    a.btn-back {
+      margin-bottom: 20px;
+      display: inline-block;
+      color: #00ffff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a.btn-back:hover {
+      text-decoration: underline;
+    }
+
+    /* Card styles (same responsive style as Template 1) */
+    .card-custom-navy {
+      background-color: #2C3E50;
+      border-radius: 15px;
+      box-shadow: 0 0 15px #00ffff66;
+    }
+
+    .card-custom-slate {
+      background-color: #566573;
+      border-radius: 15px;
+      box-shadow: 0 0 15px #00ffff44;
+    }
+
+    .card-title {
+      color: #00ffff;
+      font-weight: 600;
+    }
+
+    .card-text {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #fff;
+      margin: 0;
+    }
+
+    /* Table styling same as Template 1 */
+    table {
+      background-color: #111;
+      color: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    table thead {
+      background-color: #333;
+      color: #00ffff;
+    }
+
+    table th, table td {
+      vertical-align: middle;
+      text-align: center;
+      font-size: 1.1rem;
+      padding: 0.75rem 0.5rem;
+    }
+
+    /* Badge styling */
+    .badge-status {
+      background-color: #34495E;
+      color: #ECF0F1;
+      font-weight: 600;
+      padding: 0.5em 0.75em;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+    }
+    .backlog-highlight {
+  color: #ff6b6b;          /* soft red text */
+  font-weight: bold;
+  text-shadow: 0 0 8px #ff6b6b66;
+}
+
+.backlog-tag {
+  background-color: #f1c40f;
+  color: #000;
+  font-weight: 600;
+  padding: 0.4em 0.8em;
+  border-radius: 0.5rem;
+}
+
+
+    /* Responsive spacing for summary cards */
+    @media (max-width: 767.98px) {
+      .summary-cards .col-md-6 {
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="btn-back">← Back to Dashboard</a>
+  <h2>Stores - Work Order Overview</h2>
+
+  <div class="container">
+    <!-- Summary cards -->
+    <div class="row summary-cards justify-content-center mb-4">
+      <div class="col-12 col-md-6">
+        <div class="card card-custom-navy text-center p-4">
+          <h5 class="card-title">Total Work Orders Today</h5>
+          <p class="card-text">{{ total_today }}</p>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card card-custom-slate text-center p-4">
+          <h5 class="card-title">Total Work Orders in Backlog</h5>
+          <p class="card-text">{{ total_backlog }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="table table-dark table-hover table-bordered align-middle text-center mb-5">
+        <thead>
+          <tr>
+            <th>Start Date</th>
+            <th>Work Order Number</th>
+            <th>Part Number</th>
+            <th>Total Hours Required</th>
+            <th>Parts Qty</th>
+            <th>WO Status</th>
+            <th>Printing Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in work_orders %}
+  <tr>
+            <td>{{ order.start_date }}</td>
+            <td>
+  {{ order.work_order_number }}
+</td>
+
+            <td>{{ order.part_number }}</td>
+            <td>{{ order.total_hours_required }}</td>
+            <td>{{ order.parts_qty }}</td>
+            <td><span class="badge-status">{{ order.wo_status }}</span></td>
+            <td>
+              <span class="badge {% if order.printing_status == 'Printed' %}bg-success{% else %}bg-secondary{% endif %}">
+                {{ order.printing_status }}
+              </span>
+            </td>
+    <td>
+      {% if order.is_backlog %}
+        <span class="badge backlog-tag">Backlog</span>
+      {% endif %}
+    </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

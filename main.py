@@ -83,12 +83,22 @@ def get_sharepoint_file(file_url):
     return file_stream
 
 def clean_and_prepare_df(df, rename_map):
+    # Strip whitespace
     df.columns = df.columns.str.strip()
+    # Remove duplicate suffixes like .1, .2, .3
     df.columns = df.columns.str.replace(r'\.\d+$', '', regex=True)
+    # Apply rename mappings
     df.rename(columns=rename_map, inplace=True)
-    # Normalize for Postgres (lowercase, underscores)
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+    # Normalize: lowercase, replace spaces with underscores
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(" ", "_")
+    )
     return df
+
+
 
 def create_db_and_load_excel():
     try:

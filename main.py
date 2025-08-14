@@ -88,29 +88,84 @@ def clean_and_prepare_df(df, rename_map):
     df.rename(columns=rename_map, inplace=True)
     return df
 
+# Stores table (starting B12)
+sheet_name_stores = "Stores"
+header_row_stores = 11  # Excel row 12
+usecols_stores = "B:H"  # B: StartDate, C: WorkOrder, ..., H: WO Status
+
+column_rename_map_stores = {
+    "StartDate": "StartDate",
+    "Work Order Number": "WorkOrderNumber",
+    "Part Number": "PartNumber",
+    "Total Hours Required": "TotalHours",
+    "Parts Qty": "PartsQty",
+    "WO Status": "WOStatus"
+}
+
+
 def create_db_and_load_excel():
     try:
         file_stream = get_sharepoint_file(file_url_pvt)
 
         # Vacuum data
-        df_vacuum = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row,
-                                  usecols=usecols_vacuum, engine="openpyxl")
+        df_vacuum = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row, usecols=usecols_vacuum, engine="openpyxl")
         df_vacuum = clean_and_prepare_df(df_vacuum, column_rename_map_vacuum)
 
         file_stream.seek(0)
-
         # Trimming data
-        df_trimming = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row,
-                                    usecols=usecols_trimming, engine="openpyxl")
+        df_trimming = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row, usecols=usecols_trimming, engine="openpyxl")
         df_trimming = clean_and_prepare_df(df_trimming, column_rename_map_trimming)
+
+        file_stream.seek(0)
+        # Stores data
+        df_stores = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row_stores, usecols=usecols_stores, engine="openpyxl")
+        df_stores = clean_and_prepare_df(df_stores, column_rename_map_stores)
 
         conn = get_db_connection()
         df_vacuum.to_sql("vacuum_data", engine, if_exists="replace", index=False)
         df_trimming.to_sql("trimming_data", engine, if_exists="replace", index=False)
+        df_stores.to_sql("stores_data", engine, if_exists="replace", index=False)
         conn.close()
         print(f"[{datetime.now()}] Database updated with latest Excel data.")
     except Exception as e:
         print(f"[{datetime.now()}] Error updating database: {e}")
+
+def get_stores_data():
+    conn = get_db_connection()
+    df = pd.read_sql_query("SELECT * FROM stores_data ORDER BY StartDate DESC", engine)
+    conn.close()
+
+    today = datetime.today().date()
+    work_orders = []
+    for _, row in df.iterrows():
+        start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
+        is_backlog = start_date != today
+        work_orders.append({
+            "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
+            "work_order_number": row["WorkOrderNumber"],
+            "part_number": row["PartNumber"],
+            "total_hours_required": row["TotalHours"],
+            "parts_qty": row["PartsQty"],
+            "wo_status": row["WOStatus"],
+            "printing_status": "Not Printed",
+            "is_backlog": is_backlog
+        })
+
+    total_today = sum(1 for wo in work_orders if wo["start_date"] == today.strftime("%d-%m-%y"))
+    total_backlog = len(work_orders) - total_today
+
+    return {
+        "total_work_orders": len(work_orders),
+        "total_today": total_today,
+        "total_backlog": total_backlog,
+        "work_orders": work_orders
+    }
+
+@app.route("/stores.html")
+def stores_dashboard():
+    data = get_stores_data()
+    return render_template("stores.html", **data)
+
 
 def scheduled_refresh(interval_seconds=600):
     create_db_and_load_excel()

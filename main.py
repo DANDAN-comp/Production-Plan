@@ -57,6 +57,20 @@ column_rename_map_trimming = {
     "WO Status": "WO Status",
 }
 
+# For Stores
+usecols_stores = "B:H"  # Columns B to H
+header_row_stores = 11   # Excel row 12 (0-indexed 11)
+column_rename_map_stores = {
+    "StartDate": "StartDate",
+    "WorksOrderNumber": "WorksOrderNumber",
+    "Part Number": "PartNumber",
+    "Sum of TotalHours": "TotalHours",
+    "Parts Qty": "PartsQty",
+    "WO Status": "WO Status",
+    "Printing Status": "Printing Status"
+}
+
+
 # --- Local Testing (SQLite) ---
 # Uncomment for local testing:
 #DATABASE_URLL = "sqlite:///local.db"
@@ -65,7 +79,7 @@ column_rename_map_trimming = {
 #def get_db_connection():
     #if DATABASE_URLL.startswith("sqlite"):
         #return sqlite3.connect("local.db")
-#else:
+    #else:
         #return psycopg2.connect(DATABASE_URLL, sslmode="require")
 
 DATABASE_URLL = os.getenv("DATABASE_URLL")  # Set this in Render as an environment variable  # same var
@@ -74,6 +88,59 @@ engine = create_engine(DATABASE_URLL)
 def get_db_connection():
     return psycopg2.connect(DATABASE_URLL, sslmode="require")
 
+def get_stores_data():
+    try:
+        conn = get_db_connection()
+        df_stores = pd.read_sql_query("SELECT * FROM stores_data", conn)
+        conn.close()
+
+        # Data cleaning
+        relevant_cols = ["StartDate", "WorksOrderNumber", "PartNumber", "TotalHours", "PartsQty", "WO Status"]
+        df_stores.dropna(subset=relevant_cols, how='all', inplace=True)
+
+        df_stores["StartDate"] = pd.to_datetime(df_stores["StartDate"], errors="coerce")
+        df_stores["TotalHours"] = pd.to_numeric(df_stores["TotalHours"], errors="coerce").fillna(0)
+        df_stores["PartsQty"] = pd.to_numeric(df_stores["PartsQty"], errors="coerce").fillna(0)
+        df_stores = df_stores.sort_values(by="StartDate", ascending=False)
+
+        today = datetime.today().date()
+        total_work_orders = df_stores.shape[0]
+        total_today = df_stores[df_stores["StartDate"].dt.date == today].shape[0]
+        total_backlog = total_work_orders - total_today
+
+        work_orders = []
+        for _, row in df_stores.iterrows():
+            start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
+            is_backlog = start_date != today
+
+            work_orders.append({
+                "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
+                "work_order_number": row["WorksOrderNumber"],
+                "part_number": row["PartNumber"],
+                "total_hours_required": row["TotalHours"],
+                "parts_qty": row["PartsQty"],
+                "wo_status": row["WO Status"],
+                "printing_status": row.get("Printing Status", "Not Printed"),
+                "is_backlog": is_backlog
+            })
+
+        return {
+            "total_work_orders": total_work_orders,
+            "total_today": total_today,
+            "total_backlog": total_backlog,
+            "work_orders": work_orders
+        }
+
+    except Exception as e:
+        print(f"[{datetime.now()}] Error fetching stores data: {e}")
+        return None
+
+@app.route("/stores")
+def stores_dashboard():
+    data = get_stores_data()
+    if data is None:
+        return jsonify({"error": "No data found for Stores"}), 404
+    return render_template("stores.html", **data)
 
 def get_sharepoint_file(file_url):
     ctx = ClientContext(site_url).with_credentials(UserCredential(username, password))
@@ -104,10 +171,18 @@ def create_db_and_load_excel():
                                     usecols=usecols_trimming, engine="openpyxl")
         df_trimming = clean_and_prepare_df(df_trimming, column_rename_map_trimming)
 
-        conn = get_db_connection()
+        file_stream.seek(0)
+
+        # Stores data
+        df_stores = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row_stores,
+                                  usecols=usecols_stores, engine="openpyxl")
+        df_stores = clean_and_prepare_df(df_stores, column_rename_map_stores)
+
+        # Save to PostgreSQL
         df_vacuum.to_sql("vacuum_data", engine, if_exists="replace", index=False)
         df_trimming.to_sql("trimming_data", engine, if_exists="replace", index=False)
-        conn.close()
+        df_stores.to_sql("stores_data", engine, if_exists="replace", index=False)
+
         print(f"[{datetime.now()}] Database updated with latest Excel data.")
     except Exception as e:
         print(f"[{datetime.now()}] Error updating database: {e}")
@@ -117,22 +192,10 @@ def scheduled_refresh(interval_seconds=600):
     threading.Timer(interval_seconds, scheduled_refresh, [interval_seconds]).start()
 
 def get_dashboard_data(resource_name, machine_type):
-    conn = get_db_connection()
     table = "vacuum_data" if machine_type == "vacuum" else "trimming_data"
-    placeholder = "?" if DATABASE_URLL.startswith("sqlite") else "%s"
-
-    # TRIM + ILIKE for Postgres, just = for SQLite
-    if DATABASE_URLL.startswith("sqlite"):
-        query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") = {placeholder}'
-    else:
-        query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") ILIKE {placeholder}'
-
-    df = pd.read_sql_query(
-        query,
-        engine,
-        params=(resource_name.strip(),)
-    )
-
+    conn = get_db_connection()
+    query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") ILIKE %s'
+    df = pd.read_sql_query(query, conn, params=(resource_name.strip(),))
     conn.close()
 
     if df.empty:
@@ -141,21 +204,16 @@ def get_dashboard_data(resource_name, machine_type):
     df["StartDate"] = pd.to_datetime(df["StartDate"], errors="coerce")
     df["TotalHours"] = pd.to_numeric(df["TotalHours"], errors="coerce").fillna(0)
     df["PartsQty"] = pd.to_numeric(df["PartsQty"], errors="coerce").fillna(0)
+    df = df.sort_values(by="StartDate", ascending=False)
 
     today = datetime.today().date()
     total_work_orders = df.shape[0]
     total_today = df[df["StartDate"].dt.date == today].shape[0]
     total_backlog = total_work_orders - total_today
 
-    # ✅ Sort DataFrame by StartDate descending
-    df = df.sort_values(by="StartDate", ascending=False)
-
     work_orders = []
     for _, row in df.iterrows():
-        printing_status = "Not Printed"
-        if "Printing Status" in df.columns and pd.notnull(row.get("Printing Status")):
-            printing_status = row["Printing Status"]
-
+        printing_status = row.get("Printing Status", "Not Printed") if "Printing Status" in df.columns else "Not Printed"
         start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
         is_backlog = start_date != today
 
@@ -233,14 +291,22 @@ def index():
 
     conn = get_db_connection()
     machine_data = []
+
+    # Stores first
+    stores_data = get_stores_data()
+    if stores_data:
+        machine_data.append({
+            "name": "Stores",
+            "category": "Stores",
+            "target": stores_data["total_work_orders"],
+            "todo": "NA",
+            "done": "NA",
+            "url": "/stores"
+        })
+
     for machine_name in vacuum_machines + trimming_machines:
         table = "vacuum_data" if machine_name in vacuum_machines else "trimming_data"
-        placeholder = "?" if DATABASE_URLL.startswith("sqlite") else "%s"
-
-        if DATABASE_URLL.startswith("sqlite"):
-            query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") = {placeholder}'
-        else:
-            query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") ILIKE {placeholder}'
+        query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") ILIKE %s'
 
         cur = conn.cursor()
         cur.execute(query, (machine_name.strip(),))
@@ -256,10 +322,17 @@ def index():
             "target": total_wos,
             "todo": "NA",
             "done": "NA",
-            "url": "/" + [slug for slug, name in slug_to_excel_name.items() if name == machine_name][0]
+            "url": f"/{machine_slug_from_name(machine_name)}"
         })
+
     conn.close()
-    return render_template("index1.html", machines=machine_data)
+    return render_template("index.html", machines=machine_data)
+
+def machine_slug_from_name(name):
+    for slug, excel_name in slug_to_excel_name.items():
+        if excel_name == name:
+            return slug
+    return name.lower().replace(" ", "-")
 
 
 if __name__ == "__main__":

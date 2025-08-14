@@ -123,65 +123,58 @@
         font-size: 1rem;
       }
     }
-  </style>
-  <style>
-  .header-container {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-top: 10px;
-  }
 
-  .header-title {
-    text-align: center;
-    margin: 0;
-    font-size: 3rem;
-    color: #00ffff;
-  }
-
-  .header-logo {
-    height: 1.5em;
-    vertical-align: middle;
-    margin-right: 12px;
-  }
-
-  .header-qr {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 180px;
-    border: 2px solid #fff;
-    border-radius: 8px;
-  }
-
-  /* Mobile adjustments */
-  @media (max-width: 768px) {
+    /* Header Styles */
     .header-container {
-      flex-direction: column;
-      gap: 10px;
-    }
-    .header-qr {
-      position: static;
-      height: 140px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 10px;
     }
     .header-title {
-      font-size: 2rem;
+      text-align: center;
+      margin: 0;
+      font-size: 3rem;
+      color: #00ffff;
     }
-  }
-</style>
+    .header-logo {
+      height: 1.5em;
+      vertical-align: middle;
+      margin-right: 12px;
+    }
+    .header-qr {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 180px;
+      border: 2px solid #fff;
+      border-radius: 8px;
+    }
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .header-qr {
+        position: static;
+        height: 140px;
+      }
+      .header-title {
+        font-size: 2rem;
+      }
+    }
+  </style>
 </head>
 <body>
 
   <div class="header-container">
-  <h2 class="header-title">
-    <img src="/static/logo1.jpg" alt="Logo" class="header-logo">
-    Shop Floor Production Andon Board
-  </h2>
-  <img src="/static/Production Plan.jpg" alt="Production Plan" class="header-qr">
-</div>
-
-
+    <h2 class="header-title">
+      <img src="/static/logo1.jpg" alt="Logo" class="header-logo">
+      Shop Floor Production Andon Board
+    </h2>
+    <img src="/static/Production Plan.jpg" alt="Production Plan" class="header-qr">
+  </div>
 
   <!-- Vacuum Forming Machines -->
   <div class="section-label">Vacuum Forming</div>
@@ -221,26 +214,25 @@
     {% endfor %}
   </div>
 
-    <div class="separator"></div>
+  <div class="separator"></div>
 
-  <!-- Stores -->
- <div class="section-label">Stores</div>
+  <!-- Stores Machines -->
+<div class="section-label">Stores</div>
+
 <div class="dashboard">
-  {% set store = machines|selectattr("category", "equalto", "Stores")|first %}
-  {% if store %}
-    <div class="machine-card">
-      <div class="machine-name">{{ store.name }}</div>
-      <div class="top-half">
-        🎯 Target: {{ store.target }}
-      </div>
-      <div class="bottom-half">
-        <div class="left">To Do: {{ store.todo }}</div>
-        <div class="right">Done: {{ store.done }}</div>
-      </div>
-      <a href="{{ store.url }}" class="btn btn-custom">Details</a>
+  <div class="machine-card">
+    <div class="machine-name">Stores</div>
+    <div class="top-half">
+      🎯 Target: {{ machines[0].target }}
     </div>
-  {% endif %}
+    <div class="bottom-half">
+      <div class="left">To Do: NA</div>
+      <div class="right">Done: NA</div>
+    </div>
+    <a href="/stores" class="btn btn-custom">Details</a>
+  </div>
 </div>
+
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

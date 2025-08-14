@@ -97,11 +97,11 @@ usecols_stores = "B:H"  # B: StartDate, C: WorkOrder, ..., H: WO Status
 
 column_rename_map_stores = {
     "StartDate": "StartDate",
-    "Work Order Number": "WorkOrderNumber",
-    "Part Number": "PartNumber",
-    "Total Hours Required": "TotalHours",
-    "Parts Qty": "PartsQty",
-    "WO Status": "WOStatus"
+    "Work Order Number": "WorksOrderNumber",
+    "Part Number": "Part Number",
+    "Total Hours Required": "Sum of TotalHours",
+    "Parts Qty": "Parts Qty",
+    "WO Status": "WO Status"
 }
 
 

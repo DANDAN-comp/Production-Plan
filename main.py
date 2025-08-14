@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
 def get_stores_data():
     conn = get_db_connection()
-    df = pd.read_sql_query("SELECT * FROM stores_data ORDER BY StartDate DESC", engine)
+    df = pd.read_sql_query('SELECT * FROM stores_data ORDER BY "StartDate" DESC', engine)
     conn.close()
 
     today = datetime.today().date()

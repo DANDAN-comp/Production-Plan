@@ -147,6 +147,9 @@ def get_dashboard_data(resource_name, machine_type):
     total_today = df[df["StartDate"].dt.date == today].shape[0]
     total_backlog = total_work_orders - total_today
 
+    # ✅ Sort DataFrame by StartDate descending
+    df = df.sort_values(by="StartDate", ascending=False)
+
     work_orders = []
     for _, row in df.iterrows():
         printing_status = "Not Printed"
@@ -166,9 +169,6 @@ def get_dashboard_data(resource_name, machine_type):
             "printing_status": printing_status,
             "is_backlog": is_backlog
         })
-
-    # ✅ Sort so today's orders come first, then backlog
-    work_orders.sort(key=lambda x: (x["is_backlog"], x["start_date"]), reverse=False)
 
     return {
         "total_work_orders": total_work_orders,

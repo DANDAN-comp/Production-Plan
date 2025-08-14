@@ -71,6 +71,8 @@ column_rename_map_trimming = {
 DATABASE_URLL = os.getenv("DATABASE_URLL")  # Set this in Render as an environment variable  # same var
 engine = create_engine(DATABASE_URLL)
 
+
+
 def get_db_connection():
     return psycopg2.connect(DATABASE_URLL, sslmode="require")
 
@@ -129,6 +131,12 @@ def create_db_and_load_excel():
         print(f"[{datetime.now()}] Database updated with latest Excel data.")
     except Exception as e:
         print(f"[{datetime.now()}] Error updating database: {e}")
+
+
+if __name__ == "__main__":
+    print("Loading Excel data from SharePoint into local DB initially...")
+    create_db_and_load_excel()
+    app.run(debug=True)
 
 def get_stores_data():
     conn = get_db_connection()
@@ -325,8 +333,3 @@ def index():
     conn.close()
     return render_template("index1.html", machines=machine_data)
 
-
-if __name__ == "__main__":
-    print("Loading Excel data from SharePoint into local DB initially...")
-    create_db_and_load_excel()
-    app.run(debug=True)

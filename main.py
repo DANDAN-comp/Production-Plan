@@ -258,7 +258,6 @@ def index():
             "done": "NA",
             "url": "/" + [slug for slug, name in slug_to_excel_name.items() if name == machine_name][0]
         })
-
     conn.close()
     return render_template("index1.html", machines=machine_data)
 

@@ -68,12 +68,14 @@ column_rename_map_trimming = {
 #else:
         #return psycopg2.connect(DATABASE_URLL, sslmode="require")
 
-# --- Database setup ---
-DATABASE_URLL = os.getenv("DATABASE_URLL")
+DATABASE_URLL = os.getenv("DATABASE_URLL")  # Set this in Render as an environment variable  # same var
 engine = create_engine(DATABASE_URLL)
+
+
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URLL, sslmode="require")
+
 
 def get_sharepoint_file(file_url):
     ctx = ClientContext(site_url).with_credentials(UserCredential(username, password))
@@ -99,26 +101,37 @@ def clean_and_prepare_df(df, rename_map):
     return df
 
 
+# Stores table (starting B12)
+sheet_name_stores = "Stores"
+header_row_stores = 11  # Excel row 12
+usecols_stores = "B:H"  # B: StartDate, C: WorkOrder, ..., H: WO Status
+
+column_rename_map_stores = {
+    "StartDate": "StartDate",
+    "Work Order Number": "WorksOrderNumber",
+    "Part Number": "Part Number",
+    "Total Hours Required": "Sum of TotalHours",
+    "Parts Qty": "Parts Qty",
+    "WO Status": "WO Status"
+}
+
 
 def create_db_and_load_excel():
     try:
         file_stream = get_sharepoint_file(file_url_pvt)
 
         # Vacuum data
-        df_vacuum = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row,
-                                  usecols=usecols_vacuum, engine="openpyxl")
+        df_vacuum = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row, usecols=usecols_vacuum, engine="openpyxl")
         df_vacuum = clean_and_prepare_df(df_vacuum, column_rename_map_vacuum)
 
         file_stream.seek(0)
         # Trimming data
-        df_trimming = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row,
-                                    usecols=usecols_trimming, engine="openpyxl")
+        df_trimming = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row, usecols=usecols_trimming, engine="openpyxl")
         df_trimming = clean_and_prepare_df(df_trimming, column_rename_map_trimming)
 
         file_stream.seek(0)
         # Stores data
-        df_stores = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row_stores,
-                                  usecols=usecols_stores, engine="openpyxl")
+        df_stores = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row_stores, usecols=usecols_stores, engine="openpyxl")
         df_stores = clean_and_prepare_df(df_stores, column_rename_map_stores)
 
         conn = get_db_connection()
@@ -130,24 +143,29 @@ def create_db_and_load_excel():
     except Exception as e:
         print(f"[{datetime.now()}] Error updating database: {e}")
 
-# --- Flask routes ---
+
+if __name__ == "__main__":
+    print("Loading Excel data from SharePoint into local DB initially...")
+    create_db_and_load_excel()
+    app.run(debug=True)
+
 def get_stores_data():
     conn = get_db_connection()
-    df = pd.read_sql_query('SELECT * FROM stores_data ORDER BY start_date DESC', engine)
+    df = pd.read_sql_query("SELECT * FROM stores_data ORDER BY StartDate DESC", engine)
     conn.close()
 
     today = datetime.today().date()
     work_orders = []
     for _, row in df.iterrows():
-        start_date = row["start_date"].date() if pd.notnull(row["start_date"]) else None
+        start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
         is_backlog = start_date != today
         work_orders.append({
-            "start_date": row["start_date"].strftime("%d-%m-%y") if pd.notnull(row["start_date"]) else "",
-            "work_order_number": row["works_order_number"],
-            "part_number": row["part_number"],
-            "total_hours_required": row["total_hours"],
-            "parts_qty": row["parts_qty"],
-            "wo_status": row["wo_status"],
+            "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
+            "work_order_number": row["WorkOrderNumber"],
+            "part_number": row["PartNumber"],
+            "total_hours_required": row["TotalHours"],
+            "parts_qty": row["PartsQty"],
+            "wo_status": row["WOStatus"],
             "printing_status": "Not Printed",
             "is_backlog": is_backlog
         })
@@ -167,6 +185,7 @@ def stores_dashboard():
     data = get_stores_data()
     return render_template("stores.html", **data)
 
+
 def scheduled_refresh(interval_seconds=600):
     create_db_and_load_excel()
     threading.Timer(interval_seconds, scheduled_refresh, [interval_seconds]).start()
@@ -176,43 +195,51 @@ def get_dashboard_data(resource_name, machine_type):
     table = "vacuum_data" if machine_type == "vacuum" else "trimming_data"
     placeholder = "?" if DATABASE_URLL.startswith("sqlite") else "%s"
 
+    # TRIM + ILIKE for Postgres, just = for SQLite
     if DATABASE_URLL.startswith("sqlite"):
-        query = f'SELECT * FROM {table} WHERE TRIM(resource_description) = {placeholder}'
+        query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") = {placeholder}'
     else:
-        query = f'SELECT * FROM {table} WHERE TRIM(resource_description) ILIKE {placeholder}'
+        query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") ILIKE {placeholder}'
 
-    df = pd.read_sql_query(query, engine, params=(resource_name.strip(),))
+    df = pd.read_sql_query(
+        query,
+        engine,
+        params=(resource_name.strip(),)
+    )
+
     conn.close()
 
     if df.empty:
         return None
 
-    df["start_date"] = pd.to_datetime(df["start_date"], errors="coerce")
-    df["total_hours"] = pd.to_numeric(df["total_hours"], errors="coerce").fillna(0)
-    df["parts_qty"] = pd.to_numeric(df["parts_qty"], errors="coerce").fillna(0)
+    df["StartDate"] = pd.to_datetime(df["StartDate"], errors="coerce")
+    df["TotalHours"] = pd.to_numeric(df["TotalHours"], errors="coerce").fillna(0)
+    df["PartsQty"] = pd.to_numeric(df["PartsQty"], errors="coerce").fillna(0)
 
     today = datetime.today().date()
     total_work_orders = df.shape[0]
-    total_today = df[df["start_date"].dt.date == today].shape[0]
+    total_today = df[df["StartDate"].dt.date == today].shape[0]
     total_backlog = total_work_orders - total_today
-    df = df.sort_values(by="start_date", ascending=False)
+
+    # ✅ Sort DataFrame by StartDate descending
+    df = df.sort_values(by="StartDate", ascending=False)
 
     work_orders = []
     for _, row in df.iterrows():
         printing_status = "Not Printed"
-        if "printing_status" in df.columns and pd.notnull(row.get("printing_status")):
-            printing_status = row["printing_status"]
+        if "Printing Status" in df.columns and pd.notnull(row.get("Printing Status")):
+            printing_status = row["Printing Status"]
 
-        start_date = row["start_date"].date() if pd.notnull(row["start_date"]) else None
+        start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
         is_backlog = start_date != today
 
         work_orders.append({
-            "start_date": row["start_date"].strftime("%d-%m-%y") if pd.notnull(row["start_date"]) else "",
-            "work_order_number": row["works_order_number"],
-            "part_number": row["part_number"],
-            "total_hours_required": row["total_hours"],
-            "parts_qty": row["parts_qty"],
-            "wo_status": row["wo_status"],
+            "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
+            "work_order_number": row["WorksOrderNumber"],
+            "part_number": row["PartNumber"],
+            "total_hours_required": row["TotalHours"],
+            "parts_qty": row["PartsQty"],
+            "wo_status": row["WO Status"],
             "printing_status": printing_status,
             "is_backlog": is_backlog
         })
@@ -285,9 +312,9 @@ def index():
         placeholder = "?" if DATABASE_URLL.startswith("sqlite") else "%s"
 
         if DATABASE_URLL.startswith("sqlite"):
-            query = f'SELECT COUNT(DISTINCT works_order_number) FROM {table} WHERE TRIM(resource_description) = {placeholder}'
+            query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") = {placeholder}'
         else:
-            query = f'SELECT COUNT(DISTINCT works_order_number) FROM {table} WHERE TRIM(resource_description) ILIKE {placeholder}'
+            query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") ILIKE {placeholder}'
 
         cur = conn.cursor()
         cur.execute(query, (machine_name.strip(),))
@@ -306,19 +333,14 @@ def index():
             "url": "/" + [slug for slug, name in slug_to_excel_name.items() if name == machine_name][0]
         })
 
-    machine_data.append({
-        "name": "Stores",
-        "category": "Stores",
-        "target": 0,
-        "todo": "NA",
-        "done": "NA",
-        "url": "/stores.html"
-    })
-
+        machine_data.append({
+            "name": "Stores",
+            "category": "Stores",
+            "target": 0,
+            "todo": "NA",
+            "done": "NA",
+            "url": "/stores.html"  # Explicitly set URL
+        })
     conn.close()
     return render_template("index1.html", machines=machine_data)
 
-if __name__ == "__main__":
-    print("Loading Excel data from SharePoint into DB initially...")
-    create_db_and_load_excel()
-    app.run(debug=True)

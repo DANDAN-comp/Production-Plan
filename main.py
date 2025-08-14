@@ -195,7 +195,8 @@ def get_dashboard_data(resource_name, machine_type):
     table = "vacuum_data" if machine_type == "vacuum" else "trimming_data"
     conn = get_db_connection()
     query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") ILIKE %s'
-    df = pd.read_sql_query(query, conn, params=(resource_name.strip(),))
+    params = (f"%{resource_name.strip()}%",)
+    df = pd.read_sql_query(query, conn, params=params)
     conn.close()
 
     if df.empty:
@@ -213,7 +214,7 @@ def get_dashboard_data(resource_name, machine_type):
 
     work_orders = []
     for _, row in df.iterrows():
-        printing_status = row.get("Printing Status", "Not Printed") if "Printing Status" in df.columns else "Not Printed"
+        printing_status = row["Printing Status"] if "Printing Status" in df.columns else "Not Printed"
         start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
         is_backlog = start_date != today
 

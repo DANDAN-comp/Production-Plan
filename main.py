@@ -37,7 +37,7 @@ header_row = 11  # Excel row 12 (0-indexed 11)
 usecols_vacuum = "M:S"
 column_rename_map_vacuum = {
     "Production Resources.ResourceDescription": "ResourceDescription",
-    "FinishDate": "FinishDate",
+    "StartDate": "StartDate",
     "WorksOrderNumber": "WorksOrderNumber",
     "Sum of TotalHours": "TotalHours",
     "Part Number": "PartNumber",
@@ -49,7 +49,7 @@ column_rename_map_vacuum = {
 usecols_trimming = "X:AD"
 column_rename_map_trimming = {
     "Production Resources.ResourceDescription": "ResourceDescription",
-    "FinishDate": "FinishDate",
+    "StartDate": "StartDate",
     "WorksOrderNumber": "WorksOrderNumber",
     "Sum of TotalHours": "TotalHours",
     "Part Number": "PartNumber",
@@ -138,14 +138,17 @@ def get_dashboard_data(resource_name, machine_type):
     if df.empty:
         return None
 
-    df["FinishDate"] = pd.to_datetime(df["FinishDate"], errors="coerce")
+    df["StartDate"] = pd.to_datetime(df["StartDate"], errors="coerce")
     df["TotalHours"] = pd.to_numeric(df["TotalHours"], errors="coerce").fillna(0)
     df["PartsQty"] = pd.to_numeric(df["PartsQty"], errors="coerce").fillna(0)
 
     today = datetime.today().date()
     total_work_orders = df.shape[0]
-    total_today = df[df["FinishDate"].dt.date == today].shape[0]
+    total_today = df[df["StartDate"].dt.date == today].shape[0]
     total_backlog = total_work_orders - total_today
+
+    # ✅ Sort DataFrame by StartDate descending
+    df = df.sort_values(by="StartDate", ascending=False)
 
     work_orders = []
     for _, row in df.iterrows():
@@ -153,14 +156,18 @@ def get_dashboard_data(resource_name, machine_type):
         if "Printing Status" in df.columns and pd.notnull(row.get("Printing Status")):
             printing_status = row["Printing Status"]
 
+        start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
+        is_backlog = start_date != today
+
         work_orders.append({
-            "finish_date": row["FinishDate"].strftime("%d-%m-%y") if pd.notnull(row["FinishDate"]) else "",
+            "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
             "work_order_number": row["WorksOrderNumber"],
             "part_number": row["PartNumber"],
             "total_hours_required": row["TotalHours"],
             "parts_qty": row["PartsQty"],
             "wo_status": row["WO Status"],
-            "printing_status": printing_status
+            "printing_status": printing_status,
+            "is_backlog": is_backlog
         })
 
     return {
@@ -228,23 +235,19 @@ def index():
     machine_data = []
     for machine_name in vacuum_machines + trimming_machines:
         table = "vacuum_data" if machine_name in vacuum_machines else "trimming_data"
-        cur = conn.cursor()
         placeholder = "?" if DATABASE_URLL.startswith("sqlite") else "%s"
 
-        #cur.execute(f"""
-            #SELECT COUNT(DISTINCT "WorksOrderNumber") as total_wos
-            #FROM {table} WHERE "ResourceDescription" = {placeholder}
-        #""", (machine_name,))
+        if DATABASE_URLL.startswith("sqlite"):
+            query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") = {placeholder}'
+        else:
+            query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") ILIKE {placeholder}'
 
-        cur.execute(f"""
-            SELECT COUNT(DISTINCT "WorksOrderNumber") as total_wos
-            FROM {table} WHERE "ResourceDescription" = %s
-        """, (machine_name,))
+        cur = conn.cursor()
+        cur.execute(query, (machine_name.strip(),))
         result = cur.fetchone()
         cur.close()
 
         total_wos = result[0] if result else 0
-
         display_name = display_name_map.get(machine_name, machine_name)
 
         machine_data.append({
@@ -255,6 +258,7 @@ def index():
             "done": "NA",
             "url": "/" + [slug for slug, name in slug_to_excel_name.items() if name == machine_name][0]
         })
+
     conn.close()
     return render_template("index1.html", machines=machine_data)
 

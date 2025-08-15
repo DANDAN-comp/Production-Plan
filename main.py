@@ -216,7 +216,7 @@ def stores_dashboard():
 
 @app.route("/stores_goods_in")
 def stores_goods_in_dashboard():
-    data = get_stores_data()
+    data = get_stores_goods_in_data()
     if data is None:
         return jsonify({"error": "No data found for Stores"}), 404
     return render_template("stores goods in.html", **data)
@@ -260,9 +260,14 @@ def create_db_and_load_excel():
         df_stores = clean_and_prepare_df(df_stores, column_rename_map_stores)
 
         # Stores goods in data
-        df_stores_goods_in = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row_stores,
-                                  usecols=usecols_stores_goods_in, engine="openpyxl")
-        df_stores_goods_in = clean_and_prepare_df(df_stores, column_rename_map_stores_goods_in)
+        df_stores_goods_in = pd.read_excel(
+            file_stream,
+            sheet_name=sheet_name_pvt,
+            header=header_row_stores,
+            usecols=usecols_stores_goods_in,
+            engine="openpyxl"
+        )
+        df_stores_goods_in = clean_and_prepare_df(df_stores_goods_in, column_rename_map_stores_goods_in)
 
         # Save to PostgreSQL
         df_vacuum.to_sql("vacuum_data", engine, if_exists="replace", index=False, method="multi")

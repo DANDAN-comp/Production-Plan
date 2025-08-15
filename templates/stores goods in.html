@@ -112,7 +112,7 @@
 <body>
 
   <a href="/" class="btn-back">← Back to Dashboard</a>
-  <h2>Stores Prep- Work Order Overview</h2>
+  <h2>Stores Goods in- Work Order Overview</h2>
 
   <div class="container">
     <!-- Summary cards -->
@@ -136,7 +136,7 @@
       <table class="table table-dark table-hover table-bordered align-middle text-center mb-5">
         <thead>
           <tr>
-            <th>Start Date</th>
+            <th>Finish Date</th>
             <th>Work Order Number</th>
             <th>Part Number</th>
             <th>Total Hours Required</th>
@@ -148,7 +148,7 @@
         <tbody>
           {% for order in work_orders %}
   <tr>
-            <td>{{ order.start_date }}</td>
+            <td>{{ order.finish_date }}</td>
             <td>
   {{ order.work_order_number }}
 </td>

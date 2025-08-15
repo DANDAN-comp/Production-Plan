@@ -73,6 +73,20 @@ column_rename_map_stores = {
     "Printing Status": "Printing Status"
 }
 
+# For Stores Goods in
+usecols_stores_goods_in = "CK:CQ"  # Columns B to H
+header_row_stores = 11   # Excel row 12 (0-indexed 11)
+column_rename_map_stores = {
+    "FinishDate": "FinishDate",
+    "WorksOrderNumber": "WorksOrderNumber",
+    "Part Number": "PartNumber",
+    "Sum of TotalHours": "TotalHours",
+    "Parts Qty": "PartsQty",
+    "WO Status": "WO Status",
+    "Printing Status": "Printing Status"
+}
+
+
 
 # --- Local Testing (SQLite) ---
 # Uncomment for local testing:
@@ -146,12 +160,66 @@ def get_stores_data():
         print(f"[{datetime.now()}] Error fetching stores data: {e}")
         return None
 
+def get_stores_goods_in_data():
+    try:
+        conn = get_db_connection()
+        df_stores = pd.read_sql_query("SELECT * FROM stores_goods_in_data", conn)
+        conn.close()
+
+        # Data cleaning
+        relevant_cols = ["finishdate", "worksordernumber", "partnumber", "totalhours", "partsqty", "wo status"]
+        df_stores.dropna(subset=relevant_cols, how='all', inplace=True)
+
+        df_stores["finishdate"] = pd.to_datetime(df_stores["finishdate"], errors="coerce")
+        df_stores["totalhours"] = pd.to_numeric(df_stores["totalhours"], errors="coerce").fillna(0)
+        df_stores["partsqty"] = pd.to_numeric(df_stores["partsqty"], errors="coerce").fillna(0)
+        df_stores = df_stores.sort_values(by="finishdate", ascending=False)
+
+        today = datetime.today().date()
+        total_work_orders = df_stores.shape[0]
+        total_today = df_stores[df_stores["finishdate"].dt.date == today].shape[0]
+        total_backlog = total_work_orders - total_today
+
+        work_orders = []
+        for _, row in df_stores.iterrows():
+            start_date = row["finishdate"].date() if pd.notnull(row["finishdate"]) else None
+            is_backlog = start_date != today
+
+            work_orders.append({
+                "finish_date": row["finishdate"].strftime("%d-%m-%y") if pd.notnull(row["finishdate"]) else "",
+                "work_order_number": row["worksordernumber"],
+                "part_number": row["partnumber"],
+                "total_hours_required": row["totalhours"],
+                "parts_qty": row["partsqty"],
+                "wo_status": row["wo status"],
+                "printing_status": row.get("printing status", "Not Printed"),
+                "is_backlog": is_backlog
+            })
+
+        return {
+            "total_work_orders": total_work_orders,
+            "total_today": total_today,
+            "total_backlog": total_backlog,
+            "work_orders": work_orders
+        }
+
+    except Exception as e:
+        print(f"[{datetime.now()}] Error fetching stores data: {e}")
+        return None
+
 @app.route("/stores")
 def stores_dashboard():
     data = get_stores_data()
     if data is None:
         return jsonify({"error": "No data found for Stores"}), 404
     return render_template("stores.html", **data)
+
+@app.route("/stores_goods_in")
+def stores_goods_in_dashboard():
+    data = get_stores_data()
+    if data is None:
+        return jsonify({"error": "No data found for Stores"}), 404
+    return render_template("stores goods in.html", **data)
 
 def get_sharepoint_file(file_url):
     ctx = ClientContext(site_url).with_credentials(UserCredential(username, password))

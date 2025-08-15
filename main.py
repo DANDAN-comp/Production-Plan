@@ -9,6 +9,9 @@ import threading
 import os
 import psycopg2
 from sqlalchemy import create_engine
+from sqlalchemy.engine.url import make_url
+
+
 
 
 
@@ -85,8 +88,16 @@ column_rename_map_stores = {
 DATABASE_URLL = os.getenv("DATABASE_URLL")  # Set this in Render as an environment variable  # same var
 engine = create_engine(DATABASE_URLL)
 
+# For psycopg2
 def get_db_connection():
-    return psycopg2.connect(DATABASE_URLL, sslmode="require")
+    url = make_url(DATABASE_URLL)
+    return psycopg2.connect(
+        dbname=url.database,
+        user=url.username,
+        password=url.password,
+        host=url.host,
+        port=url.port
+    )
 
 def get_stores_data():
     try:
@@ -153,7 +164,9 @@ def clean_and_prepare_df(df, rename_map):
     df.columns = df.columns.str.strip()
     df.columns = df.columns.str.replace(r'\.\d+$', '', regex=True)
     df.rename(columns=rename_map, inplace=True)
+    df.columns = df.columns.str.lower()  # ✅ force lowercase for Postgres
     return df
+
 
 def create_db_and_load_excel():
     try:
@@ -194,7 +207,7 @@ def scheduled_refresh(interval_seconds=600):
 def get_dashboard_data(resource_name, machine_type):
     table = "vacuum_data" if machine_type == "vacuum" else "trimming_data"
     conn = get_db_connection()
-    query = f'SELECT * FROM {table} WHERE TRIM("ResourceDescription") ILIKE %s'
+    query = f'SELECT * FROM {table} WHERE TRIM(resourcedescription) ILIKE %s'
     params = (f"%{resource_name.strip()}%",)
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
@@ -307,10 +320,10 @@ def index():
 
     for machine_name in vacuum_machines + trimming_machines:
         table = "vacuum_data" if machine_name in vacuum_machines else "trimming_data"
-        query = f'SELECT COUNT(DISTINCT "WorksOrderNumber") FROM {table} WHERE TRIM("ResourceDescription") ILIKE %s'
+        query = f'SELECT COUNT(DISTINCT worksordernumber) FROM {table} WHERE TRIM(resourcedescription) ILIKE %s'
 
         cur = conn.cursor()
-        cur.execute(query, (machine_name.strip(),))
+        cur.execute(query, (f"%{machine_name.strip()}%",))
         result = cur.fetchone()
         cur.close()
 

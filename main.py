@@ -106,32 +106,32 @@ def get_stores_data():
         conn.close()
 
         # Data cleaning
-        relevant_cols = ["StartDate", "WorksOrderNumber", "PartNumber", "TotalHours", "PartsQty", "WO Status"]
+        relevant_cols = ["startdate", "worksordernumber", "partnumber", "totalhours", "partsqty", "wo status"]
         df_stores.dropna(subset=relevant_cols, how='all', inplace=True)
 
-        df_stores["StartDate"] = pd.to_datetime(df_stores["StartDate"], errors="coerce")
-        df_stores["TotalHours"] = pd.to_numeric(df_stores["TotalHours"], errors="coerce").fillna(0)
-        df_stores["PartsQty"] = pd.to_numeric(df_stores["PartsQty"], errors="coerce").fillna(0)
-        df_stores = df_stores.sort_values(by="StartDate", ascending=False)
+        df_stores["startdate"] = pd.to_datetime(df_stores["startdate"], errors="coerce")
+        df_stores["totalhours"] = pd.to_numeric(df_stores["totalhours"], errors="coerce").fillna(0)
+        df_stores["partsqty"] = pd.to_numeric(df_stores["partsqty"], errors="coerce").fillna(0)
+        df_stores = df_stores.sort_values(by="startdate", ascending=False)
 
         today = datetime.today().date()
         total_work_orders = df_stores.shape[0]
-        total_today = df_stores[df_stores["StartDate"].dt.date == today].shape[0]
+        total_today = df_stores[df_stores["startdate"].dt.date == today].shape[0]
         total_backlog = total_work_orders - total_today
 
         work_orders = []
         for _, row in df_stores.iterrows():
-            start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
+            start_date = row["startdate"].date() if pd.notnull(row["startdate"]) else None
             is_backlog = start_date != today
 
             work_orders.append({
-                "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
-                "work_order_number": row["WorksOrderNumber"],
-                "part_number": row["PartNumber"],
-                "total_hours_required": row["TotalHours"],
-                "parts_qty": row["PartsQty"],
-                "wo_status": row["WO Status"],
-                "printing_status": row.get("Printing Status", "Not Printed"),
+                "start_date": row["startdate"].strftime("%d-%m-%y") if pd.notnull(row["startdate"]) else "",
+                "work_order_number": row["worksordernumber"],
+                "part_number": row["partnumber"],
+                "total_hours_required": row["totalhours"],
+                "parts_qty": row["partsqty"],
+                "wo_status": row["wo status"],
+                "printing_status": row.get("printing status", "Not Printed"),
                 "is_backlog": is_backlog
             })
 
@@ -207,7 +207,7 @@ def scheduled_refresh(interval_seconds=600):
 def get_dashboard_data(resource_name, machine_type):
     table = "vacuum_data" if machine_type == "vacuum" else "trimming_data"
     conn = get_db_connection()
-    query = f'SELECT * FROM {table} WHERE TRIM("resourcedescription") ILIKE %s'
+    query = f'SELECT * FROM {table} WHERE TRIM(resourcedescription) ILIKE %s'
     params = (f"%{resource_name.strip()}%",)
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
@@ -215,29 +215,29 @@ def get_dashboard_data(resource_name, machine_type):
     if df.empty:
         return None
 
-    df["StartDate"] = pd.to_datetime(df["StartDate"], errors="coerce")
-    df["TotalHours"] = pd.to_numeric(df["TotalHours"], errors="coerce").fillna(0)
-    df["PartsQty"] = pd.to_numeric(df["PartsQty"], errors="coerce").fillna(0)
-    df = df.sort_values(by="StartDate", ascending=False)
+    df["startdate"] = pd.to_datetime(df["startdate"], errors="coerce")
+    df["totalhours"] = pd.to_numeric(df["totalhours"], errors="coerce").fillna(0)
+    df["partsqty"] = pd.to_numeric(df["partsqty"], errors="coerce").fillna(0)
+    df = df.sort_values(by="startdate", ascending=False)
 
     today = datetime.today().date()
     total_work_orders = df.shape[0]
-    total_today = df[df["StartDate"].dt.date == today].shape[0]
+    total_today = df[df["startdate"].dt.date == today].shape[0]
     total_backlog = total_work_orders - total_today
 
     work_orders = []
     for _, row in df.iterrows():
-        printing_status = row["Printing Status"] if "Printing Status" in df.columns else "Not Printed"
-        start_date = row["StartDate"].date() if pd.notnull(row["StartDate"]) else None
+        printing_status = row["Printing Status"] if "printing status" in df.columns else "Not Printed"
+        start_date = row["startdate"].date() if pd.notnull(row["startdate"]) else None
         is_backlog = start_date != today
 
         work_orders.append({
-            "start_date": row["StartDate"].strftime("%d-%m-%y") if pd.notnull(row["StartDate"]) else "",
-            "work_order_number": row["WorksOrderNumber"],
-            "part_number": row["PartNumber"],
-            "total_hours_required": row["TotalHours"],
-            "parts_qty": row["PartsQty"],
-            "wo_status": row["WO Status"],
+            "start_date": row["startdate"].strftime("%d-%m-%y") if pd.notnull(row["startdate"]) else "",
+            "work_order_number": row["worksordernumber"],
+            "part_number": row["partnumber"],
+            "total_hours_required": row["totalhours"],
+            "parts_qty": row["partsqty"],
+            "wo_status": row["wo status"],
             "printing_status": printing_status,
             "is_backlog": is_backlog
         })

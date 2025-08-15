@@ -76,7 +76,7 @@ column_rename_map_stores = {
 # For Stores Goods in
 usecols_stores_goods_in = "CK:CQ"  # Columns B to H
 header_row_stores = 11   # Excel row 12 (0-indexed 11)
-column_rename_map_stores = {
+column_rename_map_stores_goods_in = {
     "FinishDate": "FinishDate",
     "WorksOrderNumber": "WorksOrderNumber",
     "Part Number": "PartNumber",
@@ -259,10 +259,17 @@ def create_db_and_load_excel():
                                   usecols=usecols_stores, engine="openpyxl")
         df_stores = clean_and_prepare_df(df_stores, column_rename_map_stores)
 
+        # Stores goods in data
+        df_stores_goods_in = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row_stores,
+                                  usecols=usecols_stores_goods_in, engine="openpyxl")
+        df_stores_goods_in = clean_and_prepare_df(df_stores, column_rename_map_stores_goods_in)
+
         # Save to PostgreSQL
         df_vacuum.to_sql("vacuum_data", engine, if_exists="replace", index=False, method="multi")
         df_trimming.to_sql("trimming_data", engine, if_exists="replace", index=False, method="multi")
         df_stores.to_sql("stores_data", engine, if_exists="replace", index=False, method="multi")
+        df_stores_goods_in.to_sql("stores_data", engine, if_exists="replace", index=False, method="multi")
+
 
         print(f"[{datetime.now()}] Database updated with latest Excel data.")
     except Exception as e:

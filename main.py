@@ -227,7 +227,7 @@ def get_dashboard_data(resource_name, machine_type):
 
     work_orders = []
     for _, row in df.iterrows():
-        printing_status = row["Printing Status"] if "printing status" in df.columns else "Not Printed"
+        printing_status = row["printing status"] if "printing status" in df.columns else "Not Printed"
         start_date = row["startdate"].date() if pd.notnull(row["startdate"]) else None
         is_backlog = start_date != today
 
@@ -340,7 +340,7 @@ def index():
         })
 
     conn.close()
-    return render_template("index.html", machines=machine_data)
+    return render_template("index1.html", machines=machine_data)
 
 def machine_slug_from_name(name):
     for slug, excel_name in slug_to_excel_name.items():

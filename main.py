@@ -273,7 +273,7 @@ def create_db_and_load_excel():
         df_vacuum.to_sql("vacuum_data", engine, if_exists="replace", index=False, method="multi")
         df_trimming.to_sql("trimming_data", engine, if_exists="replace", index=False, method="multi")
         df_stores.to_sql("stores_data", engine, if_exists="replace", index=False, method="multi")
-        df_stores_goods_in.to_sql("stores_data", engine, if_exists="replace", index=False, method="multi")
+        df_stores_goods_in.to_sql("stores_goods_in_data", engine, if_exists="replace", index=False, method="multi")
 
 
         print(f"[{datetime.now()}] Database updated with latest Excel data.")

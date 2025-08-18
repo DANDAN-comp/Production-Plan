@@ -215,34 +215,23 @@
   </div>
 
   <div class="separator"></div>
-
 <!-- Stores Machines -->
 <div class="section-label">Stores</div>
 
 <div class="dashboard">
-  <div class="machine-card">
-    <div class="machine-name">Stores-Prep</div>
-    <div class="top-half">
-      🎯 Target: {{ machines[0].target }}
+  {% for machine in machines if machine.category == "Stores" %}
+    <div class="machine-card">
+      <div class="machine-name">{{ machine.name }}</div>
+      <div class="top-half">
+        🎯 Target: {{ machine.target }}
+      </div>
+      <div class="bottom-half">
+        <div class="left">To Do: {{ machine.todo }}</div>
+        <div class="right">Done: {{ machine.done }}</div>
+      </div>
+      <a href="{{ machine.url }}" class="btn btn-custom">Details</a>
     </div>
-    <div class="bottom-half">
-      <div class="left">To Do: NA</div>
-      <div class="right">Done: NA</div>
-    </div>
-    <a href="/stores" class="btn btn-custom">Details</a>
-  </div>
-
-  <div class="machine-card">
-    <div class="machine-name">Stores-Goods in</div>
-    <div class="top-half">
-      🎯 Target: {{ machines[0].target }}
-    </div>
-    <div class="bottom-half">
-      <div class="left">To Do: NA</div>
-      <div class="right">Done: NA</div>
-    </div>
-    <a href="/stores_goods_in" class="btn btn-custom">Details</a>
-  </div>
+  {% endfor %}
 </div>
 
 

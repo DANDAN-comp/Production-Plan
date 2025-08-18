@@ -404,6 +404,18 @@ def index():
             "url": "/stores"
         })
 
+    # Stores Goods In
+    stores_goods_in_data = get_stores_goods_in_data()
+    if stores_goods_in_data:
+        machine_data.append({
+            "name": "Stores-Goods In",
+            "category": "Stores",
+            "target": stores_goods_in_data["total_work_orders"],
+            "todo": "NA",
+            "done": "NA",
+            "url": "/stores_goods_in"
+        })
+
     for machine_name in vacuum_machines + trimming_machines:
         table = "vacuum_data" if machine_name in vacuum_machines else "trimming_data"
         query = f'SELECT COUNT(DISTINCT worksordernumber) FROM {table} WHERE TRIM(resourcedescription) ILIKE %s'

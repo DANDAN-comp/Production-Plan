@@ -396,7 +396,7 @@ def index():
     stores_data = get_stores_data()
     if stores_data:
         machine_data.append({
-            "name": "Stores",
+            "name": "Stores-Prep",
             "category": "Stores",
             "target": stores_data["total_work_orders"],
             "todo": "NA",

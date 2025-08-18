@@ -119,6 +119,9 @@ def get_stores_data():
         df_stores = pd.read_sql_query("SELECT * FROM stores_data", conn)
         conn.close()
 
+        print(f"Columns in stores_data: {df_stores.columns.tolist()}")  # Debug column names
+        print(f"First few rows:\n{df_stores.head()}")  # Debug data
+
         # Data cleaning
         relevant_cols = ["startdate", "worksordernumber", "partnumber", "totalhours", "partsqty", "wo status"]
         df_stores.dropna(subset=relevant_cols, how='all', inplace=True)
@@ -163,17 +166,20 @@ def get_stores_data():
 def get_stores_goods_in_data():
     try:
         conn = get_db_connection()
-        df_stores = pd.read_sql_query("SELECT * FROM stores_goods_in_data", conn)
+        df_stores_goods_in = pd.read_sql_query("SELECT * FROM stores_goods_in_data", conn)
         conn.close()
+
+        print(f"Columns in stores_goods_in_data: {df_stores_goods_in.columns.tolist()}")  # Debug column names
+        print(f"First few rows:\n{df_stores_goods_in.head()}")  # Debug data
 
         # Data cleaning
         relevant_cols = ["finishdate", "worksordernumber", "partnumber", "totalhours", "partsqty", "wo status"]
-        df_stores.dropna(subset=relevant_cols, how='all', inplace=True)
+        df_stores_goods_in.dropna(subset=relevant_cols, how='all', inplace=True)
 
-        df_stores["finishdate"] = pd.to_datetime(df_stores["finishdate"], errors="coerce")
-        df_stores["totalhours"] = pd.to_numeric(df_stores["totalhours"], errors="coerce").fillna(0)
-        df_stores["partsqty"] = pd.to_numeric(df_stores["partsqty"], errors="coerce").fillna(0)
-        df_stores = df_stores.sort_values(by="finishdate", ascending=False)
+        df_stores_goods_in["finishdate"] = pd.to_datetime(df_stores_goods_in["finishdate"], errors="coerce")
+        df_stores_goods_in["totalhours"] = pd.to_numeric(df_stores_goods_in["totalhours"], errors="coerce").fillna(0)
+        df_stores_goods_in["partsqty"] = pd.to_numeric(df_stores_goods_in["partsqty"], errors="coerce").fillna(0)
+        df_stores = df_stores_goods_in.sort_values(by="finishdate", ascending=False)
 
         today = datetime.today().date()
         total_work_orders = df_stores.shape[0]

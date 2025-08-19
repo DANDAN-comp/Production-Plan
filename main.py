@@ -336,13 +336,13 @@ def get_dashboard_data(resource_name, machine_type):
     }
 
 # Machine lists
-vacuum_machines = ["Yellow Cannon", "CMS EIDOS", "Blue Cannon Shelley-Max 1450x915", "UNO 810x610", "Red Cannon"]
+vacuum_machines = ["Yellow Cannon", "CMS EIDOS", "Blue Cannon Shelley-Max 1450x915", "UNO 810x610", "Red Shelley - Max 810x610"]
 trimming_machines = ['CMS Ares "New" Prime', "CMS Ares 4618 Prime", "CMS Ares 3618 Prime", "Grimme 1", "Grimme 2"]
 
 slug_to_excel_name = {
     "yellow-cannon": "Yellow Cannon",
     "uno": "UNO 810x610",
-    "red-cannon": "Red Cannon",
+    "red-cannon": "Red Shelley - Max 810x610",
     "grimme-2": "Grimme 2",
     "grimme-1": "Grimme 1",
     "eidos": "CMS EIDOS",
@@ -355,7 +355,7 @@ slug_to_excel_name = {
 excel_to_html = {
     "Yellow Cannon": "Yellow Cannon.html",
     "UNO 810x610": "UNO.html",
-    "Red Cannon": "Red Cannon.html",
+    "Red Shelley - Max 810x610": "Red Cannon.html",
     "Grimme 2": "Grimme 2.html",
     "Grimme 1": "Grimme 1.html",
     "CMS EIDOS": "Eidos.html",

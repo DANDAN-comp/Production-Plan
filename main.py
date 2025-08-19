@@ -292,13 +292,15 @@ def create_db_and_load_excel():
         df_stores_goods_in.to_sql("stores_goods_in_data", engine, if_exists="replace", index=False, method="multi")
 
         print(f"[{datetime.now()}] ✅ Database updated with latest Excel data.")
-        except Exception as e:
-        print(f"[{datetime.now()}] ❌ Error updating database: {e}")
+
+        # --- DB Sanity Check ---
+        with engine.connect() as conn:
+            for table in ["vacuum_data", "trimming_data", "stores_data", "stores_goods_in_data"]:
+                result = conn.execute(f"SELECT COUNT(*) AS cnt, MAX(startdate) AS latest FROM {table}")
+                row = result.fetchone()
+                print(f"[CHECK] {table}: {row.cnt} rows | Latest startdate = {row.latest}")
 
 
-        print(f"[{datetime.now()}] Database updated with latest Excel data.")
-    except Exception as e:
-        print(f"[{datetime.now()}] Error updating database: {e}")
 
 def scheduled_refresh(interval_seconds=600):
     create_db_and_load_excel()

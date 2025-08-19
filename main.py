@@ -244,16 +244,12 @@ def clean_and_prepare_df(df, rename_map):
 
 def create_db_and_load_excel():
     try:
-        print(f"[{datetime.now()}] Downloading file from SharePoint...")
-
         file_stream = get_sharepoint_file(file_url_pvt)
 
         # Vacuum data
         df_vacuum = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row,
                                   usecols=usecols_vacuum, engine="openpyxl")
         df_vacuum = clean_and_prepare_df(df_vacuum, column_rename_map_vacuum)
-        print(f"Vacuum rows: {len(df_vacuum)} | Preview:\n{df_vacuum.head()}")
-
 
         file_stream.seek(0)
 
@@ -261,8 +257,6 @@ def create_db_and_load_excel():
         df_trimming = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row,
                                     usecols=usecols_trimming, engine="openpyxl")
         df_trimming = clean_and_prepare_df(df_trimming, column_rename_map_trimming)
-        print(f"Trimming rows: {len(df_trimming)} | Preview:\n{df_trimming.head()}")
-
 
         file_stream.seek(0)
 
@@ -270,8 +264,6 @@ def create_db_and_load_excel():
         df_stores = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row_stores,
                                   usecols=usecols_stores, engine="openpyxl")
         df_stores = clean_and_prepare_df(df_stores, column_rename_map_stores)
-        print(f"Stores rows: {len(df_stores)} | Preview:\n{df_stores.head()}")
-
 
         # Stores goods in data
         df_stores_goods_in = pd.read_excel(
@@ -282,8 +274,6 @@ def create_db_and_load_excel():
             engine="openpyxl"
         )
         df_stores_goods_in = clean_and_prepare_df(df_stores_goods_in, column_rename_map_stores_goods_in)
-        print(f"Stores Goods In rows: {len(df_stores_goods_in)} | Preview:\n{df_stores_goods_in.head()}")
-
 
         # Save to PostgreSQL
         df_vacuum.to_sql("vacuum_data", engine, if_exists="replace", index=False, method="multi")
@@ -291,16 +281,10 @@ def create_db_and_load_excel():
         df_stores.to_sql("stores_data", engine, if_exists="replace", index=False, method="multi")
         df_stores_goods_in.to_sql("stores_goods_in_data", engine, if_exists="replace", index=False, method="multi")
 
-        print(f"[{datetime.now()}] ✅ Database updated with latest Excel data.")
 
-        # --- DB Sanity Check ---
-        with engine.connect() as conn:
-            for table in ["vacuum_data", "trimming_data", "stores_data", "stores_goods_in_data"]:
-                result = conn.execute(f"SELECT COUNT(*) AS cnt, MAX(startdate) AS latest FROM {table}")
-                row = result.fetchone()
-                print(f"[CHECK] {table}: {row.cnt} rows | Latest startdate = {row.latest}")
-
-
+        print(f"[{datetime.now()}] Database updated with latest Excel data.")
+    except Exception as e:
+        print(f"[{datetime.now()}] Error updating database: {e}")
 
 def scheduled_refresh(interval_seconds=600):
     create_db_and_load_excel()
@@ -371,7 +355,7 @@ slug_to_excel_name = {
 excel_to_html = {
     "Yellow Cannon": "Yellow Cannon.html",
     "UNO 810x610": "UNO.html",
-    "Red Shelley - Max 810x610": "Red Cannon.html",
+    "Red Cannon": "Red Cannon.html",
     "Grimme 2": "Grimme 2.html",
     "Grimme 1": "Grimme 1.html",
     "CMS EIDOS": "Eidos.html",
@@ -400,7 +384,6 @@ def index():
     display_name_map = {
         "Blue Cannon Shelley-Max 1450x915": "Blue Cannon",
         "UNO 810x610": "UNO",
-        "Red Shelley - Max 810x610": "Red Cannon",
         'CMS Ares "New" Prime': "Ares 3",
         "CMS Ares 4618 Prime": "Ares 2",
         "CMS Ares 3618 Prime": "Ares 1"

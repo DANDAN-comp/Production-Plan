@@ -99,12 +99,12 @@ column_rename_map_stores_goods_in = {
     #else:
         #return psycopg2.connect(DATABASE_URLL, sslmode="require")
 
-DATABASE_URLL = os.getenv("DATABASE_URLL")  # Set this in Render as an environment variable  # same var
-engine = create_engine(DATABASE_URLL)
+bank = os.getenv("production-data-db")  # Set this in Render as an environment variable  # same var
+engine = create_engine(bank)
 
 # For psycopg2
 def get_db_connection():
-    url = make_url(DATABASE_URLL)
+    url = make_url(bank)
     return psycopg2.connect(
         dbname=url.database,
         user=url.username,

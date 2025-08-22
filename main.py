@@ -1,4 +1,5 @@
 import pandas as pd
+import requests
 from flask import Flask, render_template, jsonify
 from datetime import datetime
 from io import BytesIO
@@ -10,12 +11,8 @@ import os
 import psycopg2
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
-
-
-
-
-
-
+from msal import ConfidentialClientApplication
+from urllib.parse import quote
 
 
 
@@ -23,14 +20,64 @@ app = Flask(__name__)
 
 # SharePoint authentication details
 site_url = "https://donite1.sharepoint.com/sites/Donite"
-username = "daniel@donite.com"
-password = "And096521"
+
+# --- 🔐 SharePoint Authentication (Program 1 style) ---
+tenant_id = "fa65bc0e-19ae-4d1c-8474-e1a5c480afc4"
+client_id = "fb01e8e3-4d48-4a21-bc7a-bc5210462897"
+client_secret = "18Q8Q~11768wHF_cyG624qlHZnmGrCp2rU5awcfN"
 
 # SharePoint file details
 file_url_pvt = (
     "/sites/Donite/Shared Documents/Quality/01-QMS/Records/"
     "DONITE Production Approvals/PPAR/Plan vs Actual - Daniel - Copy.xlsm"
 )
+
+msal_app = ConfidentialClientApplication(
+    client_id,
+    authority=f"https://login.microsoftonline.com/{tenant_id}",
+    client_credential=client_secret
+)
+
+SCOPES = ["https://graph.microsoft.com/.default"]
+
+def get_access_token():
+    result = msal_app.acquire_token_silent(scopes=SCOPES, account=None)
+    if not result:
+        result = msal_app.acquire_token_for_client(scopes=SCOPES)
+    if "access_token" not in result:
+        raise Exception(f"Unable to acquire token: {result.get('error_description')}")
+    return result["access_token"]
+
+def get_headers():
+    return {"Authorization": f"Bearer {get_access_token()}"}
+
+def fetch_site_and_drive():
+
+    # Site ID
+    response = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_url}", headers=get_headers())
+    response.raise_for_status()
+    site_id = response.json()["id"]
+
+    # Drive ID
+    response = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives", headers=get_headers())
+    response.raise_for_status()
+    drives = response.json().get("value", [])
+    drive_id = next((d["id"] for d in drives if d["name"] in ["Documents", "Shared Documents"]), None)
+    if not drive_id:
+        raise Exception("Could not find desired drive")
+    return site_id, drive_id
+
+site_id, drive_id = fetch_site_and_drive()
+
+# --- 📂 File Download (like Program 1) ---
+def download_sharepoint_file(drive_path):
+    """Download file using Graph API like Program 1"""
+    download_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root:{quote(drive_path)}:/content"
+    response = requests.get(download_url, headers=get_headers())
+    if response.status_code == 200:
+        return BytesIO(response.content)
+    else:
+        raise Exception(f"Failed to download file: {response.status_code}, {response.text}")
 
 # Excel read parameters
 sheet_name_pvt = "PVT - Planned Start Date"
@@ -227,12 +274,7 @@ def stores_goods_in_dashboard():
         return jsonify({"error": "No data found for Stores"}), 404
     return render_template("stores goods in.html", **data)
 
-def get_sharepoint_file(file_url):
-    ctx = ClientContext(site_url).with_credentials(UserCredential(username, password))
-    file_stream = BytesIO()
-    ctx.web.get_file_by_server_relative_url(file_url).download(file_stream).execute_query()
-    file_stream.seek(0)
-    return file_stream
+
 
 def clean_and_prepare_df(df, rename_map):
     df.columns = df.columns.str.strip()
@@ -244,7 +286,8 @@ def clean_and_prepare_df(df, rename_map):
 
 def create_db_and_load_excel():
     try:
-        file_stream = get_sharepoint_file(file_url_pvt)
+        drive_path = "/Quality/01-QMS/Records/DONITE Production Approvals/PPAR/Plan vs Actual - Daniel - Copy.xlsm"
+        file_stream = download_sharepoint_file(drive_path)
 
         # Vacuum data
         df_vacuum = pd.read_excel(file_stream, sheet_name=sheet_name_pvt, header=header_row,

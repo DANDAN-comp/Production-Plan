@@ -52,9 +52,11 @@ def get_headers():
     return {"Authorization": f"Bearer {get_access_token()}"}
 
 def fetch_site_and_drive():
+    # Use the site identifier format: hostname:/site-path
+    site_identifier = "donite1.sharepoint.com:/sites/Donite"
 
     # Site ID
-    response = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_url}", headers=get_headers())
+    response = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_identifier}", headers=get_headers())
     response.raise_for_status()
     site_id = response.json()["id"]
 

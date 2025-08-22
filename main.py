@@ -400,7 +400,7 @@ slug_to_excel_name = {
 excel_to_html = {
     "Yellow Cannon": "Yellow Cannon.html",
     "UNO 810x610": "UNO.html",
-    "Red Cannon": "Red Cannon.html",
+    "Red Shelley - Max 810x610": "Red Cannon.html",
     "Grimme 2": "Grimme 2.html",
     "Grimme 1": "Grimme 1.html",
     "CMS EIDOS": "Eidos.html",
@@ -429,6 +429,7 @@ def index():
     display_name_map = {
         "Blue Cannon Shelley-Max 1450x915": "Blue Cannon",
         "UNO 810x610": "UNO",
+        "Red Shelley - Max 810x610" : "Red Cannon",
         'CMS Ares "New" Prime': "Ares 3",
         "CMS Ares 4618 Prime": "Ares 2",
         "CMS Ares 3618 Prime": "Ares 1"

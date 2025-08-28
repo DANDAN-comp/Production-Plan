@@ -491,7 +491,46 @@ def machine_slug_from_name(name):
         if excel_name == name:
             return slug
     return name.lower().replace(" ", "-")
+    
+@app.route("/complete")
+def complete():
+    # Fetch Vacuum Formers
+    vacuum_query = """
+        SELECT "ResourceDescription","StartDate","WorksOrderNumber","PartNumber",
+               "TotalHours","PartsQty","WO Status"
+        FROM vacuum_formers
+    """
+    vacuum_df = pd.read_sql(vacuum_query, engine)
 
+    # Fetch Trimmers
+    trimmer_query = """
+        SELECT "ResourceDescription","StartDate","WorksOrderNumber","PartNumber",
+               "TotalHours","PartsQty","WO Status"
+        FROM trimmers
+    """
+    trimmer_df = pd.read_sql(trimmer_query, engine)
+
+    # Fetch Stores Prep
+    stores_prep_query = """
+        SELECT "StartDate","WorksOrderNumber","PartNumber","TotalHours","PartsQty","WO Status"
+        FROM stores_prep
+    """
+    stores_prep_df = pd.read_sql(stores_prep_query, engine)
+
+    # Fetch Goods In
+    goods_in_query = """
+        SELECT "FinishDate","WorksOrderNumber","PartNumber","TotalHours","PartsQty","WO Status"
+        FROM goods_in
+    """
+    goods_in_df = pd.read_sql(goods_in_query, engine)
+
+    return render_template(
+        "complete.html",
+        vacuum=vacuum_df.to_dict(orient="records"),
+        trimmers=trimmer_df.to_dict(orient="records"),
+        stores_prep=stores_prep_df.to_dict(orient="records"),
+        goods_in=goods_in_df.to_dict(orient="records"),
+    )
 
 if __name__ == "__main__":
     print("Loading Excel data from SharePoint into local DB initially...")

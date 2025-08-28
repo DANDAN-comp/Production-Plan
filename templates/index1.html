@@ -165,6 +165,31 @@
       }
     }
   </style>
+  <style>
+.round-button {
+  display: inline-block;
+  width: 80px;          /* size of the button */
+  height: 80px;
+  background: radial-gradient(circle at 30% 30%, #4da6ff, #0066cc); /* glossy gradient */
+  border-radius: 50%;   /* perfectly round */
+  border: 3px solid #004080;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  text-align: center;
+  line-height: 80px;    /* vertically center text */
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+  margin-left: 20px;    /* spacing from title */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.round-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+</style>
+
 </head>
 <body>
 
@@ -174,7 +199,7 @@
       Shop Floor Production Andon Board
     </h2>
     <!-- Round Blue Button linking to /complete -->
-<a href="{{ url_for('complete') }}" class="round-button">Go</a>
+  <a href="{{ url_for('complete') }}" class="round-button">View</a>
 
     <img src="/static/Production Plan.jpg" alt="Production Plan" class="header-qr">
   </div>

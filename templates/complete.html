@@ -9,6 +9,10 @@
       margin: 20px;
       background: #f4f6f9;
     }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
     .container {
       display: flex;
       gap: 20px;
@@ -67,13 +71,13 @@
         <tbody>
           {% for row in vacuum %}
           <tr>
-            <td>{{ row.ResourceDescription }}</td>
-            <td>{{ row.StartDate }}</td>
-            <td>{{ row.WorksOrderNumber }}</td>
-            <td>{{ row.PartNumber }}</td>
-            <td>{{ row.TotalHours }}</td>
-            <td>{{ row.PartsQty }}</td>
-            <td>{{ row["WO Status"] }}</td>
+            <td>{{ row.resourcedescription }}</td>
+            <td>{{ row.startdate }}</td>
+            <td>{{ row.worksordernumber }}</td>
+            <td>{{ row.partnumber }}</td>
+            <td>{{ row.totalhours }}</td>
+            <td>{{ row.partsqty }}</td>
+            <td>{{ row["wo status"] }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -98,13 +102,13 @@
         <tbody>
           {% for row in trimmers %}
           <tr>
-            <td>{{ row.ResourceDescription }}</td>
-            <td>{{ row.StartDate }}</td>
-            <td>{{ row.WorksOrderNumber }}</td>
-            <td>{{ row.PartNumber }}</td>
-            <td>{{ row.TotalHours }}</td>
-            <td>{{ row.PartsQty }}</td>
-            <td>{{ row["WO Status"] }}</td>
+            <td>{{ row.resourcedescription }}</td>
+            <td>{{ row.startdate }}</td>
+            <td>{{ row.worksordernumber }}</td>
+            <td>{{ row.partnumber }}</td>
+            <td>{{ row.totalhours }}</td>
+            <td>{{ row.partsqty }}</td>
+            <td>{{ row["wo status"] }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -128,12 +132,12 @@
         <tbody>
           {% for row in stores_prep %}
           <tr>
-            <td>{{ row.StartDate }}</td>
-            <td>{{ row.WorksOrderNumber }}</td>
-            <td>{{ row.PartNumber }}</td>
-            <td>{{ row.TotalHours }}</td>
-            <td>{{ row.PartsQty }}</td>
-            <td>{{ row["WO Status"] }}</td>
+            <td>{{ row.startdate }}</td>
+            <td>{{ row.worksordernumber }}</td>
+            <td>{{ row.partnumber }}</td>
+            <td>{{ row.totalhours }}</td>
+            <td>{{ row.partsqty }}</td>
+            <td>{{ row["wo status"] }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -157,12 +161,12 @@
         <tbody>
           {% for row in goods_in %}
           <tr>
-            <td>{{ row.FinishDate }}</td>
-            <td>{{ row.WorksOrderNumber }}</td>
-            <td>{{ row.PartNumber }}</td>
-            <td>{{ row.TotalHours }}</td>
-            <td>{{ row.PartsQty }}</td>
-            <td>{{ row["WO Status"] }}</td>
+            <td>{{ row.finishdate }}</td>
+            <td>{{ row.worksordernumber }}</td>
+            <td>{{ row.partnumber }}</td>
+            <td>{{ row.totalhours }}</td>
+            <td>{{ row.partsqty }}</td>
+            <td>{{ row["wo status"] }}</td>
           </tr>
           {% endfor %}
         </tbody>

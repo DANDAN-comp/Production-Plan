@@ -492,26 +492,30 @@ def machine_slug_from_name(name):
             return slug
     return name.lower().replace(" ", "-")
     
-# Mapping
+# Reverse mapping (full name → short code)
 machine_map = {
-    "VAC_NO.1": "CMS EIDOS",
-    "VAC_NO.2": "Yellow Cannon",
-    "VAC_NO.5": "Blue Cannon Shelley-Max 1450x915",
-    "VAC_NO.7": "UNO 810x610",
-    "CNC_NO.1-A": "CMS Ares 3618 Prime",
-    "CNC_NO.2-A": "CMS Ares 4618 Prime",
-    "CNC_NO.3-A": "CMS Ares \"New\" Prime",
-    "CNC_NO.4": "Grimme 1",
-    "CNC_NO.5": "Grimme 2"
+    "CMS EIDOS": "VAC_NO.1",
+    "Yellow Cannon": "VAC_NO.2",
+    "Blue Cannon Shelley-Max 1450x915": "VAC_NO.5",
+    "UNO 810x610": "VAC_NO.7",
+    "CMS Ares 3618 Prime": "CNC_NO.1-A",
+    "CMS Ares 4618 Prime": "CNC_NO.2-A",
+    "CMS Ares \"New\" Prime": "CNC_NO.3-A",
+    "Grimme 1": "CNC_NO.4",
+    "Grimme 2": "CNC_NO.5"
 }
 
 @app.template_filter("to_date")
 def to_date(value):
+    """Convert YYYY-MM-DD[ HH:MM:SS] → DD-MM-YYYY"""
     try:
-        dt = datetime.strptime(value.split()[0], "%Y-%m-%d")
+        if " " in value:
+            dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+        else:
+            dt = datetime.strptime(value, "%Y-%m-%d")
         return dt.strftime("%d-%m-%Y")
     except Exception:
-        return value
+        return value  # fallback
 
 @app.route("/complete")
 def complete():

@@ -511,17 +511,17 @@ def to_date(value):
     try:
         # Case 1: already a datetime object
         if isinstance(value, datetime):
-            return value.strftime("%d-%m-%Y")
+            return value.strftime("%d-%m")
 
         # Case 2: string with time
         if isinstance(value, str) and " " in value:
             dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-            return dt.strftime("%d-%m-%Y")
+            return dt.strftime("%d-%m")
 
         # Case 3: string without time
         if isinstance(value, str):
             dt = datetime.strptime(value, "%Y-%m-%d")
-            return dt.strftime("%d-%m-%Y")
+            return dt.strftime("%d-%m")
 
     except Exception:
         return value  # fallback (leave it unchanged)

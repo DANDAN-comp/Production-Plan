@@ -492,19 +492,34 @@ def machine_slug_from_name(name):
             return slug
     return name.lower().replace(" ", "-")
     
+# Mapping
+machine_map = {
+    "VAC_NO.1": "CMS EIDOS",
+    "VAC_NO.2": "Yellow Cannon",
+    "VAC_NO.5": "Blue Cannon Shelley-Max 1450x915",
+    "VAC_NO.7": "UNO 810x610",
+    "CNC_NO.1-A": "CMS Ares 3618 Prime",
+    "CNC_NO.2-A": "CMS Ares 4618 Prime",
+    "CNC_NO.3-A": "CMS Ares \"New\" Prime",
+    "CNC_NO.4": "Grimme 1",
+    "CNC_NO.5": "Grimme 2"
+}
+
+@app.template_filter("to_date")
+def to_date(value):
+    try:
+        dt = datetime.strptime(value.split()[0], "%Y-%m-%d")
+        return dt.strftime("%d-%m-%Y")
+    except Exception:
+        return value
+
 @app.route("/complete")
 def complete():
     conn = get_db_connection()
-
-    # Vacuum data
     vacuum_df = pd.read_sql_query("SELECT * FROM vacuum_data", conn)
-    # Trimming data
     trimmer_df = pd.read_sql_query("SELECT * FROM trimming_data", conn)
-    # Stores Prep
     stores_prep_df = pd.read_sql_query("SELECT * FROM stores_data", conn)
-    # Stores Goods In
     goods_in_df = pd.read_sql_query("SELECT * FROM stores_goods_in_data", conn)
-
     conn.close()
 
     return render_template(
@@ -513,6 +528,7 @@ def complete():
         trimmers=trimmer_df.to_dict(orient="records"),
         stores_prep=stores_prep_df.to_dict(orient="records"),
         goods_in=goods_in_df.to_dict(orient="records"),
+        machine_map=machine_map
     )
 
 

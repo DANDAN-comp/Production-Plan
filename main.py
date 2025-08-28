@@ -507,15 +507,25 @@ machine_map = {
 
 @app.template_filter("to_date")
 def to_date(value):
-    """Convert YYYY-MM-DD[ HH:MM:SS] → DD-MM-YYYY"""
+    """Convert datetime or string → DD-MM-YYYY"""
     try:
-        if " " in value:
+        # Case 1: already a datetime object
+        if isinstance(value, datetime):
+            return value.strftime("%d-%m-%Y")
+
+        # Case 2: string with time
+        if isinstance(value, str) and " " in value:
             dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-        else:
+            return dt.strftime("%d-%m-%Y")
+
+        # Case 3: string without time
+        if isinstance(value, str):
             dt = datetime.strptime(value, "%Y-%m-%d")
-        return dt.strftime("%d-%m-%Y")
+            return dt.strftime("%d-%m-%Y")
+
     except Exception:
-        return value  # fallback
+        return value  # fallback (leave it unchanged)
+
 
 @app.route("/complete")
 def complete():

@@ -498,9 +498,9 @@ machine_map = {
     "Yellow Cannon": "VAC_NO.2",
     "Blue Cannon Shelley-Max 1450x915": "VAC_NO.5",
     "UNO 810x610": "VAC_NO.7",
-    "CMS Ares 3618 Prime": "CNC_NO.1-A",
-    "CMS Ares 4618 Prime": "CNC_NO.2-A",
-    "CMS Ares \"New\" Prime": "CNC_NO.3-A",
+    "CMS Ares 3618 Prime": "CNC_NO.1",
+    "CMS Ares 4618 Prime": "CNC_NO.2",
+    "CMS Ares \"New\" Prime": "CNC_NO.3",
     "Grimme 1": "CNC_NO.4",
     "Grimme 2": "CNC_NO.5"
 }

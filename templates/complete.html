@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Production Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f9;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+    }
+    .table-container {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      min-width: 350px;
+    }
+    h2 {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+    th {
+      background: #2c3e50;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Production Dashboard</h1>
+  <div class="container">
+
+    <!-- Vacuum Formers -->
+    <div class="table-container">
+      <h2>Vacuum Formers</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Machine</th>
+            <th>Start Date</th>
+            <th>WO Number</th>
+            <th>Part Number</th>
+            <th>Total Hours</th>
+            <th>Qty</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vacuum %}
+          <tr>
+            <td>{{ row.ResourceDescription }}</td>
+            <td>{{ row.StartDate }}</td>
+            <td>{{ row.WorksOrderNumber }}</td>
+            <td>{{ row.PartNumber }}</td>
+            <td>{{ row.TotalHours }}</td>
+            <td>{{ row.PartsQty }}</td>
+            <td>{{ row["WO Status"] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Trimmers -->
+    <div class="table-container">
+      <h2>Trimming Machines</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Machine</th>
+            <th>Start Date</th>
+            <th>WO Number</th>
+            <th>Part Number</th>
+            <th>Total Hours</th>
+            <th>Qty</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in trimmers %}
+          <tr>
+            <td>{{ row.ResourceDescription }}</td>
+            <td>{{ row.StartDate }}</td>
+            <td>{{ row.WorksOrderNumber }}</td>
+            <td>{{ row.PartNumber }}</td>
+            <td>{{ row.TotalHours }}</td>
+            <td>{{ row.PartsQty }}</td>
+            <td>{{ row["WO Status"] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Stores Prep -->
+    <div class="table-container">
+      <h2>Stores - Prep</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Start Date</th>
+            <th>WO Number</th>
+            <th>Part Number</th>
+            <th>Total Hours</th>
+            <th>Qty</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in stores_prep %}
+          <tr>
+            <td>{{ row.StartDate }}</td>
+            <td>{{ row.WorksOrderNumber }}</td>
+            <td>{{ row.PartNumber }}</td>
+            <td>{{ row.TotalHours }}</td>
+            <td>{{ row.PartsQty }}</td>
+            <td>{{ row["WO Status"] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Goods In -->
+    <div class="table-container">
+      <h2>Stores - Goods In</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Finish Date</th>
+            <th>WO Number</th>
+            <th>Part Number</th>
+            <th>Total Hours</th>
+            <th>Qty</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in goods_in %}
+          <tr>
+            <td>{{ row.FinishDate }}</td>
+            <td>{{ row.WorksOrderNumber }}</td>
+            <td>{{ row.PartNumber }}</td>
+            <td>{{ row.TotalHours }}</td>
+            <td>{{ row.PartsQty }}</td>
+            <td>{{ row["WO Status"] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</body>
+</html>

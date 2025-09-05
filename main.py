@@ -142,9 +142,11 @@ def mu():
     try:
         query = "SELECT * FROM machine_utilization ORDER BY BookingWeek, ResourceCode"
         df = pd.read_sql(query, engine)
-    except Exception:
-        # Table missing: create it
-        df = update_machine_utilization(engine)
+        if df.empty:
+            df = update_machine_utilization(engine)
+    except Exception as e:
+        print(f"[{datetime.now()}] Error fetching machine utilization: {e}")
+        return "Error fetching machine utilization. Check server logs.", 500
 
     pivot = df.pivot(index="BookingWeek", columns="ResourceCode", values=["Plan", "Actual", "Percent"])
     pivot = pivot.sort_index(axis=1, level=1)

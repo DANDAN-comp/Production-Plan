@@ -32,6 +32,9 @@ file_url_pvt = (
     "DONITE Production Approvals/PPAR/Plan vs Actual - Daniel - Copy.xlsm"
 )
 
+file_url = "/sites/Donite/Shared Documents/Quality/01-QMS/Records/DONITE Production Approvals/PPAR/KPI Plan vs Actual.xlsm"
+
+
 msal_app = ConfidentialClientApplication(
     client_id,
     authority=f"https://login.microsoftonline.com/{tenant_id}",
@@ -47,6 +50,84 @@ def get_access_token():
     if "access_token" not in result:
         raise Exception(f"Unable to acquire token: {result.get('error_description')}")
     return result["access_token"]
+
+# === Download file from SharePoint ===
+def download_excel_from_sharepoint():
+    token = get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Locate file (Graph path method)
+    item_resp = requests.get(
+        f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/root:/{file_url}",
+        headers=headers
+    )
+    item_resp.raise_for_status()
+    item_id = item_resp.json()["id"]
+
+    # Download content
+    file_resp = requests.get(
+        f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{item_id}/content",
+        headers=headers
+    )
+    file_resp.raise_for_status()
+
+    return BytesIO(file_resp.content)
+
+# === Process Excel & Update DB ===
+def update_machine_utilization(engine):
+    excel_bytes = download_excel_from_sharepoint()
+
+    # Read sheet
+    df = pd.read_excel(excel_bytes, sheet_name="Machine Utilisation_PVT")
+
+    # Keep only the needed columns starting from row 38
+    df = df.loc[37:, ["BookingWeek", "ResourceCode", "AvailableHoursPerWeek", "Total actual time_Hrs"]]
+
+    # Drop rows with NaN BookingWeek/ResourceCode
+    df = df.dropna(subset=["BookingWeek", "ResourceCode"])
+
+    # Convert BookingWeek to "Week XX"
+    def format_week(val):
+        try:
+            dt = pd.to_datetime(val)
+            return f"Week {dt.isocalendar().week}"
+        except Exception:
+            return str(val)  # fallback if not a date
+
+    df["BookingWeek"] = df["BookingWeek"].apply(format_week)
+
+    # Filter machines of interest
+    machines = ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.5", "VAC_NO.7"]
+    df = df[df["ResourceCode"].isin(machines)]
+
+    # Aggregate
+    agg_df = df.groupby(["BookingWeek", "ResourceCode"]).agg(
+        Plan=("AvailableHoursPerWeek", "max"),
+        Actual=("Total actual time_Hrs", "sum")
+    ).reset_index()
+
+    # Compute %
+    agg_df["Percent"] = (agg_df["Actual"] / agg_df["Plan"] * 100).round(2)
+
+    # Push to DB
+    agg_df.to_sql("machine_utilization", engine, if_exists="replace", index=False)
+
+    return agg_df
+
+# === Flask Route ===
+@app.route("/MU")
+def mu():
+    query = "SELECT * FROM machine_utilization ORDER BY BookingWeek, ResourceCode"
+    df = pd.read_sql(query, engine)
+
+    # Pivot to wide format (Plan/Actual/% per VAC)
+    pivot = df.pivot(index="BookingWeek", columns="ResourceCode", values=["Plan", "Actual", "Percent"])
+    pivot = pivot.sort_index(axis=1, level=1)
+
+    return render_template(
+        "Machine Utilization.html",
+        tables=[pivot.to_html(classes="table table-dark table-hover table-bordered align-middle text-center mb-5")]
+    )
 
 def get_headers():
     return {"Authorization": f"Bearer {get_access_token()}"}

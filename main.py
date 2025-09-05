@@ -51,6 +51,26 @@ def get_access_token():
         raise Exception(f"Unable to acquire token: {result.get('error_description')}")
     return result["access_token"]
 
+def get_headers():
+    return {"Authorization": f"Bearer {get_access_token()}"}
+
+def fetch_site_and_drive():
+    # Use the site identifier format: hostname:/site-path
+    site_identifier = "donite1.sharepoint.com:/sites/Donite"
+
+    # Site ID
+    response = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_identifier}", headers=get_headers())
+    response.raise_for_status()
+    site_id = response.json()["id"]
+
+    # Drive ID
+    response = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives", headers=get_headers())
+    response.raise_for_status()
+    drives = response.json().get("value", [])
+    drive_id = next((d["id"] for d in drives if d["name"] in ["Documents", "Shared Documents"]), None)
+    if not drive_id:
+        raise Exception("Could not find desired drive")
+    return site_id, drive_id
 site_id, drive_id = fetch_site_and_drive()
 
 # === Download file from SharePoint ===
@@ -135,26 +155,7 @@ def mu():
         tables=[pivot.to_html(classes="table table-dark table-hover table-bordered align-middle text-center mb-5")]
     )
 
-def get_headers():
-    return {"Authorization": f"Bearer {get_access_token()}"}
 
-def fetch_site_and_drive():
-    # Use the site identifier format: hostname:/site-path
-    site_identifier = "donite1.sharepoint.com:/sites/Donite"
-
-    # Site ID
-    response = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_identifier}", headers=get_headers())
-    response.raise_for_status()
-    site_id = response.json()["id"]
-
-    # Drive ID
-    response = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives", headers=get_headers())
-    response.raise_for_status()
-    drives = response.json().get("value", [])
-    drive_id = next((d["id"] for d in drives if d["name"] in ["Documents", "Shared Documents"]), None)
-    if not drive_id:
-        raise Exception("Could not find desired drive")
-    return site_id, drive_id
 
 
 

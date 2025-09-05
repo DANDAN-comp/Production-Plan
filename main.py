@@ -96,7 +96,7 @@ def update_machine_utilization(engine):
     excel_bytes = download_excel_from_sharepoint()
 
     # Read sheet
-    df = pd.read_excel(excel_bytes, sheet_name="Machine Utilisation_PVT")
+    df = pd.read_excel(excel_bytes, sheet_name="Machine Utilisation_PVT",header=37)
 
     # Keep only the needed columns starting from row 38
     df = df.loc[37:, ["BookingWeek", "ResourceCode", "AvailableHoursPerWeek", "Total actual time_Hrs"]]

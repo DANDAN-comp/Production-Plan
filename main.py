@@ -88,16 +88,17 @@ def update_machine_utilization(engine):
     # Drop rows with NaN BookingWeek/ResourceCode
     df = df.dropna(subset=["BookingWeek", "ResourceCode"])
 
+    # --- Fix: properly indented helper function ---
     def format_week(val):
-    try:
-        dt = pd.to_datetime(val, errors="coerce")
-        if pd.isna(dt):
-            return f"Week {int(val)}" if str(val).isdigit() else str(val)
-        return f"Week {dt.isocalendar().week}"
-    except Exception:
-        return str(val)
+        try:
+            dt = pd.to_datetime(val, errors="coerce")
+            if pd.isna(dt):
+                return f"Week {int(val)}" if str(val).isdigit() else str(val)
+            return f"Week {dt.isocalendar().week}"
+        except Exception:
+            return str(val)
 
-
+    # Apply week formatting
     df["BookingWeek"] = df["BookingWeek"].apply(format_week)
 
     # Filter machines of interest
@@ -117,6 +118,7 @@ def update_machine_utilization(engine):
     agg_df.to_sql("machine_utilization", engine, if_exists="replace", index=False)
 
     return agg_df
+
 
 # === Flask Route ===
 @app.route("/MU")

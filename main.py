@@ -51,6 +51,8 @@ def get_access_token():
         raise Exception(f"Unable to acquire token: {result.get('error_description')}")
     return result["access_token"]
 
+site_id, drive_id = fetch_site_and_drive()
+
 # === Download file from SharePoint ===
 def download_excel_from_sharepoint():
     token = get_access_token()
@@ -86,13 +88,15 @@ def update_machine_utilization(engine):
     # Drop rows with NaN BookingWeek/ResourceCode
     df = df.dropna(subset=["BookingWeek", "ResourceCode"])
 
-    # Convert BookingWeek to "Week XX"
     def format_week(val):
-        try:
-            dt = pd.to_datetime(val)
-            return f"Week {dt.isocalendar().week}"
-        except Exception:
-            return str(val)  # fallback if not a date
+    try:
+        dt = pd.to_datetime(val, errors="coerce")
+        if pd.isna(dt):
+            return f"Week {int(val)}" if str(val).isdigit() else str(val)
+        return f"Week {dt.isocalendar().week}"
+    except Exception:
+        return str(val)
+
 
     df["BookingWeek"] = df["BookingWeek"].apply(format_week)
 
@@ -150,7 +154,7 @@ def fetch_site_and_drive():
         raise Exception("Could not find desired drive")
     return site_id, drive_id
 
-site_id, drive_id = fetch_site_and_drive()
+
 
 # --- 📂 File Download (like Program 1) ---
 def download_sharepoint_file(drive_path):

@@ -143,10 +143,13 @@ def update_machine_utilization(engine):
 # === Flask Route ===
 @app.route("/MU")
 def mu():
-    query = "SELECT * FROM machine_utilization ORDER BY BookingWeek, ResourceCode"
-    df = pd.read_sql(query, engine)
+    try:
+        query = "SELECT * FROM machine_utilization ORDER BY BookingWeek, ResourceCode"
+        df = pd.read_sql(query, engine)
+    except Exception:
+        # Table missing: create it
+        df = update_machine_utilization(engine)
 
-    # Pivot to wide format (Plan/Actual/% per VAC)
     pivot = df.pivot(index="BookingWeek", columns="ResourceCode", values=["Plan", "Actual", "Percent"])
     pivot = pivot.sort_index(axis=1, level=1)
 
@@ -154,7 +157,6 @@ def mu():
         "Machine Utilization.html",
         tables=[pivot.to_html(classes="table table-dark table-hover table-bordered align-middle text-center mb-5")]
     )
-
 
 
 
@@ -238,6 +240,7 @@ column_rename_map_stores_goods_in = {
 
 bank = os.getenv("production-data-db")  # Set this in Render as an environment variable  # same var
 engine = create_engine(bank)
+update_machine_utilization(engine)
 
 # For psycopg2
 def get_db_connection():

@@ -99,7 +99,7 @@ def update_machine_utilization(engine):
     df = pd.read_excel(excel_bytes, sheet_name="Machine Utilisation_PVT",header=37)
 
     # Keep only the needed columns starting from row 38
-    df = df.loc[37:, ["BookingWeek", "ResourceCode", "AvailableHoursPerWeek", "Total actual time_Hrs"]]
+    df = df.loc[37:, ["BookingWeek", "ResourceCode", "Max of AvailableHoursPerWeek", "Sum of Total actual time_Hrs"]]
 
     # Drop rows with NaN BookingWeek/ResourceCode
     df = df.dropna(subset=["BookingWeek", "ResourceCode"])

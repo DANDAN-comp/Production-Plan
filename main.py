@@ -123,8 +123,8 @@ def update_machine_utilization(engine):
 
     # Aggregate
     agg_df = df.groupby(["BookingWeek", "ResourceCode"]).agg(
-        Plan=("AvailableHoursPerWeek", "max"),
-        Actual=("Total actual time_Hrs", "sum")
+        Plan=("Max of AvailableHoursPerWeek", "max"),
+        Actual=("Sum of Total actual time_Hrs", "sum")
     ).reset_index()
 
     # Compute %

@@ -156,23 +156,31 @@ def mu():
         traceback.print_exc()
         return "Error fetching machine utilization. Check server logs.", 500
 
-    # 🔹 Machines to display
     machines = ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.5", "VAC_NO.7"]
 
-    # 🔹 Pivot table to avoid double-summing
+    # Pivot table
     pivot = df.pivot_table(
         index="BookingWeek",
         columns="ResourceCode",
         values=["Plan", "Actual", "Percent"],
-        aggfunc='first'  # take first value instead of summing
+        aggfunc='first',
+        fill_value=0
     )
-    pivot = pivot.sort_index()  # ensures weeks appear in order
 
     # Flatten columns
     pivot.columns = [f"{col[1]}_{col[0]}" for col in pivot.columns]
     pivot.reset_index(inplace=True)
 
-    # 🔹 Build custom HTML table body
+    # Add numeric week for sorting
+    pivot['WeekNumber'] = pivot['BookingWeek'].str.extract(r'(\d+)').astype(int)
+    pivot = pivot.sort_values('WeekNumber')
+
+    # Round numeric columns
+    for col in pivot.columns:
+        if any(sub in col for sub in ['Plan', 'Actual', 'Percent']):
+            pivot[col] = pivot[col].round(2)
+
+    # Build HTML
     table_html = ""
     for _, row in pivot.iterrows():
         table_html += f"<tr><td>{row['BookingWeek']}</td>"

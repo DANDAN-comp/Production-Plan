@@ -110,6 +110,7 @@ td:first-child {
 
   <div class="container">
     <table class="table table-dark table-hover table-bordered align-middle text-center mb-5">
+      <div class="sticky-title">
       <thead>
         <tr>
           <th rowspan="2">Week No.</th>
@@ -137,6 +138,8 @@ td:first-child {
           <th>%</th>
         </tr>
       </thead>
+        </div>
+
       <tbody>
         {{ tables|safe }}
       </tbody>

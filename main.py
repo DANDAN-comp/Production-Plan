@@ -191,7 +191,13 @@ def mu():
             plan = row.get(f"{machine}_Plan", "")
             actual = row.get(f"{machine}_Actual", "")
             percent = row.get(f"{machine}_Percent", "")
-            table_html += f"<td>{plan}</td><td>{actual}</td><td>{percent}</td>"
+            # Highlight if > 100
+            if percent != "" and float(percent) > 100:
+                percent_html = f'<span class="over-100">{percent}</span>'
+            else:
+            percent_html = percent
+            table_html += f"<td>{plan}</td><td>{actual}</td><td>{percent_html}</td>"
+
         table_html += "</tr>"
 
     return render_template("Machine Utilization.html", tables=table_html)

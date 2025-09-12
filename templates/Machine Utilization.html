@@ -40,7 +40,7 @@ a.btn-back:hover { text-decoration: underline; }
     color: #00ffff;
 }
 
-/* Table container scrollable */
+/* Scrollable table container */
 .table-container {
     max-height: 600px; /* adjust as needed */
     overflow: auto;
@@ -62,14 +62,43 @@ table th, table td {
     border: 1px solid #444;
 }
 
-/* Sticky table headers */
+/* Sticky headers like Excel */
 thead th {
-    background-color: #333;
-    color: #00ffff;
+    position: sticky;
+    background-color: #000;  /* same as title */
+    color: #00ffff;           /* same as title */
     border-bottom: 2px solid #00ffff;
+    z-index: 50;
 }
 
-    /* Highlight percentages over 100% */
+/* First header row (VAC_NO.x) */
+thead tr:first-child th {
+    top: 50px;  /* below the title */
+    z-index: 50;
+}
+
+/* Second header row (Plan / Actual / %) */
+thead tr:nth-child(2) th {
+    top: 80px;  /* below title + first header row */
+    z-index: 49;
+}
+
+/* Freeze first column (Week No.) */
+th:first-child,
+td:first-child {
+    position: sticky;
+    left: 0;
+    background-color: #000;
+    color: #00ffff;
+    z-index: 51; /* higher than table body cells */
+}
+
+td:first-child {
+    background-color: #111; /* keep body first column distinct */
+    z-index: 1;
+}
+
+/* Highlight percentages over 100% */
 .over-100 {
     background-color: yellow;
     color: black;
@@ -77,8 +106,6 @@ thead th {
     border-radius: 4px;
     padding: 0 4px;
 }
-
-
 </style>
 </head>
 <body>
@@ -91,7 +118,7 @@ thead th {
 </div>
 
 <!-- Scrollable table container -->
-<div class="container mt-4">
+<div class="table-container">
     <table class="table table-dark table-hover table-bordered align-middle text-center mb-5">
         <thead>
             <tr>

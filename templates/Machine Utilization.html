@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,7 +32,6 @@
       text-decoration: underline;
     }
 
-    /* Override Bootstrap card backgrounds */
     .card-custom-navy {
       background-color: #2C3E50;
       border-radius: 15px;
@@ -58,7 +56,6 @@
       margin: 0;
     }
 
-    /* Table overrides */
     table {
       background-color: #111;
       color: #fff;
@@ -76,6 +73,36 @@
       text-align: center;
       font-size: 1rem;
       padding: 0.6rem;
+      border: 1px solid #444;
+    }
+
+    /* Sticky headers and first column */
+    .table-responsive {
+      max-height: 600px; /* adjust scroll height */
+      overflow: auto;
+      position: relative;
+    }
+
+    table thead th {
+      position: sticky;
+      top: 0;
+      background-color: #333;
+      z-index: 10;
+    }
+
+    table tbody th:first-child,
+    table thead th:first-child {
+      position: sticky;
+      left: 0;
+      background-color: #333;
+      z-index: 20;
+    }
+
+    table tbody td:first-child {
+      position: sticky;
+      left: 0;
+      background-color: #111;
+      z-index: 1;
     }
 
     /* Responsive layout for summary cards */
@@ -121,10 +148,9 @@
             <th>%</th>
           </tr>
         </thead>
-          <tbody>
-  {{ tables|safe }}
-</tbody>
-
+        <tbody>
+          {{ tables|safe }}
+        </tbody>
       </table>
     </div>
   </div>

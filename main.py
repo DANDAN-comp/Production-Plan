@@ -136,25 +136,22 @@ def update_machine_utilization(engine):
     return agg_df
 
 
-# === Flask Route ===
+
+
 @app.route("/MU")
 def mu():
     try:
         query = "SELECT * FROM machine_utilization ORDER BY BookingWeek, ResourceCode"
         df = pd.read_sql(query, engine)
         if df.empty:
+            print(f"[{datetime.now()}] Table empty, updating...")
             df = update_machine_utilization(engine)
     except Exception as e:
+        import traceback
         print(f"[{datetime.now()}] Error fetching machine utilization: {e}")
+        traceback.print_exc()
         return "Error fetching machine utilization. Check server logs.", 500
 
-    pivot = df.pivot(index="BookingWeek", columns="ResourceCode", values=["Plan", "Actual", "Percent"])
-    pivot = pivot.sort_index(axis=1, level=1)
-
-    return render_template(
-        "Machine Utilization.html",
-        tables=[pivot.to_html(classes="table table-dark table-hover table-bordered align-middle text-center mb-5")]
-    )
 
 
 

@@ -195,7 +195,7 @@ def mu():
             if percent != "" and float(percent) > 100:
                 percent_html = f'<span class="over-100">{percent}</span>'
             else:
-            percent_html = percent
+                percent_html = percent
             table_html += f"<td>{plan}</td><td>{actual}</td><td>{percent_html}</td>"
 
         table_html += "</tr>"

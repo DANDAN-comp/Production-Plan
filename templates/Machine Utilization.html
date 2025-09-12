@@ -30,7 +30,7 @@ a.btn-back:hover { text-decoration: underline; }
     top: 0;
     background-color: #000;
     z-index: 100;
-    padding: 15px 0; /* increased padding to match visible height */
+    padding: 15px 0;
     border-bottom: 2px solid #00ffff;
     text-align: center;
 }
@@ -59,13 +59,13 @@ table th, table td {
 thead th {
     position: sticky;
     background-color: #000;  /* same as title */
-    color: #00ffff;           /* same as title */
+    color: #00ffff;          /* same as title */
     border-bottom: 2px solid #00ffff;
 }
 
 /* First header row (VAC_NO.x) */
 thead tr:first-child th {
-    top: 72px;  /* height of title (including padding) */
+    top: 72px;  /* height of sticky title including padding */
     z-index: 50;
 }
 

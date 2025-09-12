@@ -107,15 +107,20 @@ def update_machine_utilization(engine):
     # --- Fix: properly indented helper function ---
     def format_week(val):
         try:
+            if pd.isna(val):
+                return ""
+            if isinstance(val, (int, float)):
+                return f"Week {int(val)}"
             dt = pd.to_datetime(val, errors="coerce")
-            if pd.isna(dt):
-                return f"Week {int(val)}" if str(val).isdigit() else str(val)
-            return f"Week {dt.isocalendar().week}"
-        except Exception:
+            if not pd.isna(dt):
+                return f"Week {dt.isocalendar().week}"
+            return str(val)
+        except:
             return str(val)
 
-    # Apply week formatting
     df["BookingWeek"] = df["BookingWeek"].apply(format_week)
+    df = df.sort_values("BookingWeek")  # ensure pivot rows are in order
+
 
     # Filter machines of interest
     machines = ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.5", "VAC_NO.7"]
@@ -123,8 +128,8 @@ def update_machine_utilization(engine):
 
     # Aggregate
     agg_df = df.groupby(["BookingWeek", "ResourceCode"]).agg(
-        Plan=("Max of AvailableHoursPerWeek", "max"),
-        Actual=("Sum of Total actual time_Hrs", "sum")
+        Plan=("Max of AvailableHoursPerWeek", "first"),
+        Actual=("Sum of Total actual time_Hrs", "first")
     ).reset_index()
 
     # Compute %
@@ -161,6 +166,7 @@ def mu():
         values=["Plan", "Actual", "Percent"],
         aggfunc='first'  # take first value instead of summing
     )
+    pivot = pivot.sort_index()  # ensures weeks appear in order
 
     # Flatten columns
     pivot.columns = [f"{col[1]}_{col[0]}" for col in pivot.columns]

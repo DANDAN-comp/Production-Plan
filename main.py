@@ -154,23 +154,31 @@ def mu():
     # 🔹 Machines to display
     machines = ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.5", "VAC_NO.7"]
 
+    # 🔹 Pivot table to avoid double-summing
+    pivot = df.pivot_table(
+        index="BookingWeek",
+        columns="ResourceCode",
+        values=["Plan", "Actual", "Percent"],
+        aggfunc='first'  # take first value instead of summing
+    )
+
+    # Flatten columns
+    pivot.columns = [f"{col[1]}_{col[0]}" for col in pivot.columns]
+    pivot.reset_index(inplace=True)
+
     # 🔹 Build custom HTML table body
     table_html = ""
-    for week, week_df in df.groupby("BookingWeek"):
-        table_html += f"<tr><td>{week}</td>"
+    for _, row in pivot.iterrows():
+        table_html += f"<tr><td>{row['BookingWeek']}</td>"
         for machine in machines:
-            row_data = week_df[week_df["ResourceCode"] == machine]
-            if not row_data.empty:
-                # Take first row if multiple, or aggregate as needed
-                plan = row_data["Plan"].iloc[0]
-                actual = row_data["Actual"].iloc[0]
-                percent = row_data["Percent"].iloc[0]
-            else:
-                plan = actual = percent = ""
+            plan = row.get(f"{machine}_Plan", "")
+            actual = row.get(f"{machine}_Actual", "")
+            percent = row.get(f"{machine}_Percent", "")
             table_html += f"<td>{plan}</td><td>{actual}</td><td>{percent}</td>"
         table_html += "</tr>"
 
     return render_template("Machine Utilization.html", tables=table_html)
+
 
 
 

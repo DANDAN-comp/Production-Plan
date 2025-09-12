@@ -96,10 +96,9 @@ def update_machine_utilization(engine):
     excel_bytes = download_excel_from_sharepoint()
 
     # Read sheet
-    df = pd.read_excel(excel_bytes, sheet_name="Machine Utilisation_PVT",header=37)
+    df = pd.read_excel(excel_bytes, sheet_name="Machine Utilisation_PVT", header=37)
+    df = df[["BookingWeek", "ResourceCode", "Max of AvailableHoursPerWeek", "Sum of Total actual time_Hrs"]]
 
-    # Keep only the needed columns starting from row 38
-    df = df.loc[37:, ["BookingWeek", "ResourceCode", "Max of AvailableHoursPerWeek", "Sum of Total actual time_Hrs"]]
 
     # Drop rows with NaN BookingWeek/ResourceCode
     df = df.dropna(subset=["BookingWeek", "ResourceCode"])
@@ -108,18 +107,22 @@ def update_machine_utilization(engine):
     def format_week(val):
         try:
             if pd.isna(val):
-                return ""
-            if isinstance(val, (int, float)):
-                return f"Week {int(val)}"
-            dt = pd.to_datetime(val, errors="coerce")
+                return None
+            val_str = str(val).strip()
+        # numeric week
+            if val_str.isdigit() or ('.' in val_str and val_str.replace('.', '', 1).isdigit()):
+                return f"Week {int(float(val_str))}"
+        # try datetime
+            dt = pd.to_datetime(val, errors='coerce')
             if not pd.isna(dt):
                 return f"Week {dt.isocalendar().week}"
-            return str(val)
+            return None
         except:
-            return str(val)
+            return None
 
     df["BookingWeek"] = df["BookingWeek"].apply(format_week)
-    df = df.sort_values("BookingWeek")  # ensure pivot rows are in order
+    df = df.dropna(subset=["BookingWeek"])  # drop rows where week couldn't be parsed
+
 
 
     # Filter machines of interest

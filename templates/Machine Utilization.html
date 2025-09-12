@@ -55,50 +55,47 @@
       color: #00ffff;
       z-index: 5;
     }
+/* Sticky page title */
+.sticky-title {
+  position: sticky;
+  top: 0; /* very top of viewport */
+  background-color: #000;
+  z-index: 30; /* above all table headers */
+  padding: 10px 0;
+  border-bottom: 2px solid #00ffff;
+}
 
 /* Top header row: machine names */
 thead tr:first-child th {
-    position: sticky;
-    top: 50px; /* below the title */
-    background-color: #333;
-    color: #00ffff;
-    z-index: 20;
+  position: sticky;
+  top: 50px; /* height of title, adjust if needed */
+  background-color: #333;
+  color: #00ffff;
+  z-index: 25; /* above Plan/Actual/% row */
 }
 
 /* Second header row: Plan / Actual / % */
 thead tr:nth-child(2) th {
-    position: sticky;
-    top: 90px; /* below title + first header row (adjust as needed) */
-    background-color: #333;
-    color: #00ffff;
-    z-index: 19;
+  position: sticky;
+  top: 80px; /* top + height of first header row */
+  background-color: #333;
+  color: #00ffff;
+  z-index: 20;
 }
 
-/* Freeze first column */
+/* First column: Week No. */
 th:first-child,
 td:first-child {
-    position: sticky;
-    left: 0;
-    background-color: #333;
-    z-index: 21; /* higher than table header rows */
+  position: sticky;
+  left: 0;
+  background-color: #333;
+  z-index: 26; /* above header rows for first column */
 }
 
 td:first-child {
-    background-color: #111;
-    z-index: 1;
+  background-color: #111;
+  z-index: 1;
 }
-
-    
-    .sticky-title {
-    position: sticky;
-    top: 0; /* stick at very top */
-    background-color: #000;
-    z-index: 30; /* higher than table headers */
-    padding: 10px 0;
-    border-bottom: 2px solid #00ffff;
-}
-
-
 
 
   </style>

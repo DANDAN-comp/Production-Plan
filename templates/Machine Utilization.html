@@ -32,20 +32,21 @@
       text-decoration: underline;
     }
 
-    table {
-      background-color: #111;
-      color: #fff;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+   table {
+    background-color: #111;
+    color: #fff;
+    border-radius: 10px;
+    border-collapse: collapse;
+    width: 100%;
+  }
 
-    table th, table td {
-      vertical-align: middle;
-      text-align: center;
-      font-size: 1rem;
-      padding: 0.6rem;
-      border: 1px solid #444;
-    }
+  table th, table td {
+    vertical-align: middle;
+    text-align: center;
+    font-size: 1rem;
+    padding: 0.6rem;
+    border: 1px solid #444;
+  }
 
     table thead th {
       position: sticky;
@@ -55,19 +56,29 @@
       z-index: 5;
     }
 
-    /* Optional: Freeze first column (Week No.) as well) */
-    table th:first-child,
-    table td:first-child {
-      position: sticky;
-      left: 0;
-      background-color: #333; /* header color for first column */
-      z-index: 10;
-    }
+    /* Sticky headers for both rows */
+  thead tr:first-child th,
+  thead tr:nth-child(2) th {
+    position: sticky;
+    top: 0; /* stick to top of viewport */
+    background-color: #333;
+    color: #00ffff;
+    z-index: 10;
+  }
 
-    table td:first-child {
-      background-color: #111; /* body cells first column */
-      z-index: 1;
-    }
+  /* Optional: Freeze first column */
+  th:first-child,
+  td:first-child {
+    position: sticky;
+    left: 0;
+    background-color: #333;
+    z-index: 11;
+  }
+
+  td:first-child {
+    background-color: #111;
+    z-index: 1;
+  }
 
   </style>
 </head>

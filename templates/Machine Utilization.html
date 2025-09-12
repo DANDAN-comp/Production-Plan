@@ -30,7 +30,7 @@ a.btn-back:hover { text-decoration: underline; }
     top: 0;
     background-color: #000;
     z-index: 100;
-    padding: 10px 0;
+    padding: 15px 0; /* increased padding to match visible height */
     border-bottom: 2px solid #00ffff;
     text-align: center;
 }
@@ -61,18 +61,17 @@ thead th {
     background-color: #000;  /* same as title */
     color: #00ffff;           /* same as title */
     border-bottom: 2px solid #00ffff;
-    z-index: 50;
 }
 
 /* First header row (VAC_NO.x) */
 thead tr:first-child th {
-    top: 50px;  /* below the title */
+    top: 72px;  /* height of title (including padding) */
     z-index: 50;
 }
 
 /* Second header row (Plan / Actual / %) */
 thead tr:nth-child(2) th {
-    top: 80px;  /* below title + first header row */
+    top: 110px; /* first header row height + title height */
     z-index: 49;
 }
 
@@ -83,11 +82,11 @@ td:first-child {
     left: 0;
     background-color: #000;
     color: #00ffff;
-    z-index: 51; /* higher than table body cells */
+    z-index: 51;
 }
 
 td:first-child {
-    background-color: #111; /* keep body first column distinct */
+    background-color: #111;
     z-index: 1;
 }
 
@@ -110,7 +109,7 @@ td:first-child {
     <h2>Machine Utilization</h2>
 </div>
 
-<!-- Table without scroll -->
+<!-- Table -->
 <div class="container mt-4">
     <table class="table table-dark table-hover table-bordered align-middle text-center mb-5">
         <thead>

@@ -141,7 +141,7 @@ def update_machine_utilization(engine):
 @app.route("/MU")
 def mu():
     try:
-        query = "SELECT * FROM machine_utilization ORDER BY BookingWeek, ResourceCode"
+        query = "SELECT * FROM machine_utilization ORDER BY bookingweek, resourcecode"
         df = pd.read_sql(query, engine)
         if df.empty:
             print(f"[{datetime.now()}] Table empty, updating...")

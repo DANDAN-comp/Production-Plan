@@ -56,29 +56,38 @@
       z-index: 5;
     }
 
-    /* Sticky headers for both rows */
-  thead tr:first-child th,
-  thead tr:nth-child(2) th {
+/* Top header row: machine names */
+thead tr:first-child th {
     position: sticky;
     top: 0; /* stick to top of viewport */
     background-color: #333;
     color: #00ffff;
-    z-index: 10;
-  }
+    z-index: 11; /* higher than second row */
+}
 
-  /* Optional: Freeze first column */
-  th:first-child,
-  td:first-child {
+/* Second header row: Plan / Actual / % */
+thead tr:nth-child(2) th {
+    position: sticky;
+    top: 2.5rem; /* height of first row, adjust if needed */
+    background-color: #333;
+    color: #00ffff;
+    z-index: 10;
+}
+
+/* Freeze first column (Week No.) */
+th:first-child,
+td:first-child {
     position: sticky;
     left: 0;
     background-color: #333;
-    z-index: 11;
-  }
+    z-index: 12; /* higher than both header rows */
+}
 
-  td:first-child {
+td:first-child {
     background-color: #111;
     z-index: 1;
-  }
+}
+
 
   </style>
 </head>

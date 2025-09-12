@@ -137,7 +137,6 @@ def update_machine_utilization(engine):
 
 
 
-
 @app.route("/MU")
 def mu():
     try:
@@ -151,6 +150,16 @@ def mu():
         print(f"[{datetime.now()}] Error fetching machine utilization: {e}")
         traceback.print_exc()
         return "Error fetching machine utilization. Check server logs.", 500
+
+    # ✅ Always return a response if no exception
+    pivot = df.pivot(index="BookingWeek", columns="ResourceCode", values=["plan", "actual", "percent"])
+    pivot = pivot.sort_index(axis=1, level=1)
+
+    return render_template(
+        "Machine Utilization.html",
+        tables=[pivot.to_html(classes="table table-dark table-hover table-bordered align-middle text-center mb-5")]
+    )
+
 
 
 

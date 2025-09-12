@@ -151,16 +151,26 @@ def mu():
         traceback.print_exc()
         return "Error fetching machine utilization. Check server logs.", 500
 
-    # ✅ Always return a response if no exception
+    # 🔹 Pivot for neat rows per week
     pivot = df.pivot(index="BookingWeek", columns="ResourceCode", values=["Plan", "Actual", "Percent"])
     pivot = pivot.sort_index(axis=1, level=1)
 
-    return render_template(
-        "Machine Utilization.html",
-        tables=[pivot.to_html(classes="table table-dark table-hover table-bordered align-middle text-center mb-5")]
-    )
+    # Flatten MultiIndex
+    pivot.columns = [f"{col[1]}_{col[0]}" for col in pivot.columns]
+    pivot.reset_index(inplace=True)
 
+    # 🔹 Build custom HTML table body
+    table_html = ""
+    for _, row in pivot.iterrows():
+        table_html += "<tr>"
+        table_html += f"<td>{row['BookingWeek']}</td>"
+        for machine in ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.5", "VAC_NO.7"]:
+            table_html += f"<td>{row.get(f'{machine}_Plan', '')}</td>"
+            table_html += f"<td>{row.get(f'{machine}_Actual', '')}</td>"
+            table_html += f"<td>{row.get(f'{machine}_Percent', '')}</td>"
+        table_html += "</tr>"
 
+    return render_template("Machine Utilization.html", tables=table_html)
 
 
 

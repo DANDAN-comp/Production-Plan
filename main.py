@@ -126,7 +126,7 @@ def update_machine_utilization(engine):
 
 
     # Filter machines of interest
-    machines = ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.4", "VAC_NO.5", "VAC_NO.6", "VAC_NO.7"]
+    machines = ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.5", "VAC_NO.6", "VAC_NO.7"]
     df = df[df["ResourceCode"].isin(machines)]
 
     # Aggregate
@@ -159,7 +159,7 @@ def mu():
         traceback.print_exc()
         return "Error fetching machine utilization. Check server logs.", 500
 
-    machines = ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.4", "VAC_NO.5", "VAC_NO.6", "VAC_NO.7"]
+    machines = ["VAC_NO.1", "VAC_NO.2", "VAC_NO.3", "VAC_NO.5", "VAC_NO.6", "VAC_NO.7"]
 
     # Pivot table
     pivot = df.pivot_table(

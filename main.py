@@ -26,8 +26,8 @@ tenant_id = "fa65bc0e-19ae-4d1c-8474-e1a5c480afc4"
 client_id = "fb01e8e3-4d48-4a21-bc7a-bc5210462897"
 client_secret = "18Q8Q~11768wHF_cyG624qlHZnmGrCp2rU5awcfN"
 
-file_url_pvt = "Quality/01-QMS/Records/DONITE Production Approvals/PPAR/Plan vs Actual - Daniel - Copy.xlsm"
-file_url = "Quality/01-QMS/Records/DONITE Production Approvals/PPAR/KPI Plan vs Actual.xlsm"
+file_url_pvt = "Quality/01-QMS/Records/DONITE Production Approvals/PPAR/Plan vs Actual - Daniel - Copy.xlsx"
+file_url = "Quality/01-QMS/Records/DONITE Production Approvals/PPAR/KPI Plan vs Actual.xlsx"
 
 
 

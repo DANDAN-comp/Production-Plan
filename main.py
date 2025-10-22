@@ -172,10 +172,21 @@ def refresh_excel_workbook(file_url, max_wait=600, poll_interval=15):
     session_headers = {**headers, "workbook-session-id": session_id}
 
     print("🔄 Triggering Excel refreshAll for:", file_url)
-    refresh_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{item_id}/workbook/refreshAll"
-    refresh_resp = requests.post(refresh_url, headers=session_headers)
+    # --- Try refreshAll (for connected workbooks); fallback to refreshSession ---
+    refresh_all_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{item_id}/workbook/refreshAll"
+    refresh_session_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{item_id}/workbook/refreshSession"
+
+    print("🔄 Attempting to refresh workbook:", file_url)
+    refresh_resp = requests.post(refresh_all_url, headers=session_headers)
+
+    # If refreshAll is unsupported, fallback gracefully
+    if refresh_resp.status_code == 404 or "Resource not found" in refresh_resp.text:
+        print("⚠️ refreshAll not supported — trying refreshSession instead.")
+        refresh_resp = requests.post(refresh_session_url, headers=session_headers)
+
     if refresh_resp.status_code not in (200, 202):
         raise Exception(f"❌ Workbook refresh failed to start: {refresh_resp.text}")
+
 
     print("✅ Refresh triggered, waiting for completion...")
 

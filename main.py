@@ -482,7 +482,7 @@ def clean_and_prepare_df(df, rename_map):
 
 def create_db_and_load_excel():
     try:
-        drive_path = "/Quality/01-QMS/Records/DONITE Production Approvals/PPAR/Plan vs Actual - Daniel - Copy.xlsm"
+        drive_path = "/Quality/01-QMS/Records/DONITE Production Approvals/PPAR/Plan vs Actual - Daniel - Copy.xlsx"
         file_stream = download_sharepoint_file(drive_path)
 
         # Vacuum data

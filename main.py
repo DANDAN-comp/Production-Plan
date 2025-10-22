@@ -144,6 +144,63 @@ def update_machine_utilization(engine):
     return agg_df
 
 
+def refresh_excel_workbook(file_url, max_wait=600, poll_interval=15):
+    """
+    Refreshes an Excel workbook stored in SharePoint using Graph API.
+    Polls until refresh completes or timeout reached.
+    :param file_url: Relative file path inside the document library.
+    :param max_wait: Max seconds to wait for refresh completion (default 10 minutes).
+    :param poll_interval: Seconds between polling attempts.
+    """
+    token = get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # --- 1️⃣ Get the file item ID ---
+    item_resp = requests.get(
+        f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/root:/{file_url}",
+        headers=headers
+    )
+    item_resp.raise_for_status()
+    item_id = item_resp.json()["id"]
+
+    # --- 2️⃣ Start a workbook session ---
+    session_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{item_id}/workbook/createSession"
+    session_payload = {"persistChanges": True}
+    session_resp = requests.post(session_url, headers={**headers, "Content-Type": "application/json"}, json=session_payload)
+    session_resp.raise_for_status()
+    session_id = session_resp.json()["id"]
+    session_headers = {**headers, "workbook-session-id": session_id}
+
+    print("🔄 Triggering Excel refreshAll for:", file_url)
+    refresh_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{item_id}/workbook/refreshAll"
+    refresh_resp = requests.post(refresh_url, headers=session_headers)
+    if refresh_resp.status_code not in (200, 202):
+        raise Exception(f"❌ Workbook refresh failed to start: {refresh_resp.text}")
+
+    print("✅ Refresh triggered, waiting for completion...")
+
+    # --- 3️⃣ Poll until refresh completes ---
+    status_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{item_id}/workbook/operations"
+    start_time = time.time()
+
+    while True:
+        status_resp = requests.get(status_url, headers=session_headers)
+        status_resp.raise_for_status()
+        operations = status_resp.json().get("value", [])
+
+        active_ops = [op for op in operations if op["status"] in ["running", "inProgress"]]
+        if not active_ops:
+            print("✅ Workbook refresh completed successfully.")
+            break
+
+        if time.time() - start_time > max_wait:
+            raise TimeoutError("⚠️ Refresh still running after max_wait seconds.")
+        time.sleep(poll_interval)
+
+    # --- 4️⃣ Close session ---
+    close_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives/{drive_id}/items/{item_id}/workbook/closeSession"
+    requests.post(close_url, headers=session_headers)
+
 
 @app.route("/MU")
 def mu():
